@@ -17,6 +17,7 @@
 ## ✨ Features
 
 ### 🌈 Core Features
+
 - **Gorgeous Modern UI** with clean typography and visual hierarchy
 - **Brilliant Colors** that automatically adapt to your terminal's capabilities
 - **Mouse Support** with hover effects and click interactions (where supported)
@@ -24,6 +25,7 @@
 - **Instant Performance** with optimized rendering and caching
 
 ### 📋 Task Management
+
 - **Priority Levels** (High/Medium/Low) with color coding
 - **Category Organization** for grouping related tasks
 - **Due Dates** with optional date formatting
@@ -32,6 +34,7 @@
 - **Task Dependencies** to create linked task workflows (coming soon)
 
 ### 📝 Content & Storage
+
 - **Markdown Storage** in simple, human-readable format
 - **Automatic Backups** with configurable options
 - **Git Integration** for versioning your task list (coming soon)
@@ -39,6 +42,7 @@
 - **Import/Export** to standard formats (coming soon)
 
 ### 🔧 Advanced Capabilities
+
 - **Extensive Configuration** via YAML configuration files
 - **Theme Support** with pre-built and custom themes
 - **Custom Keybindings** to match your workflow
@@ -75,15 +79,18 @@
 ## 🚀 Installation
 
 ### Prerequisites
+
 - Go 1.24+ (or use the pre-built binaries)
 - A terminal with true color support recommended (iTerm2, Alacritty, Kitty, etc.)
 
 ### Via Go Install (Recommended)
+
 ```bash
 go install github.com/spmfte/tuiodo@latest
 ```
 
 ### From Source
+
 ```bash
 # Clone the repository
 git clone https://github.com/spmfte/tuiodo.git
@@ -97,6 +104,7 @@ go build
 ```
 
 ### Via Homebrew (Coming Soon)
+
 ```bash
 brew install tuiodo
 ```
@@ -104,6 +112,7 @@ brew install tuiodo
 ## 🎮 Quick Start
 
 ### Basic Usage
+
 1. Launch TUIODO in your terminal: `tuiodo`
 2. Add a new task: Press `a`
 3. Toggle task completion: Press `space` or `enter`
@@ -112,6 +121,7 @@ brew install tuiodo
 6. Get help: Press `?`
 
 ### Task Format
+
 When adding tasks, you can specify categories using the format:
 
 ```
@@ -119,15 +129,19 @@ Category: Task description
 ```
 
 For example:
+
 - "Work: Finish quarterly report"
 - "Personal: Call mom about birthday plans"
 - "Health: Schedule dentist appointment"
 
 ### Adding Priorities
+
 Use the `p` key to cycle through priority levels for the selected task:
+
 - `None → Low → Medium → High → None`
 
 ### Command-line Options
+
 ```bash
 # Use a specific config file
 tuiodo --config ~/.config/tuiodo/my-config.yaml
@@ -147,24 +161,24 @@ tuiodo --print-config
 
 ## ⌨️ Keyboard Controls
 
-| Action | Keys |
-|--------|------|
-| **Navigation** ||
-| Move cursor down | <kbd>j</kbd> <kbd>↓</kbd> |
-| Move cursor up | <kbd>k</kbd> <kbd>↑</kbd> |
-| Next page | <kbd>n</kbd> <kbd>→</kbd> <kbd>l</kbd> |
-| Previous page | <kbd>b</kbd> <kbd>←</kbd> <kbd>h</kbd> |
-| Switch tabs | <kbd>tab</kbd> <kbd>t</kbd> |
-| **Task Management** ||
-| Add task | <kbd>a</kbd> |
-| Edit task | <kbd>e</kbd> |
-| Delete task | <kbd>d</kbd> |
-| Toggle completion | <kbd>space</kbd> <kbd>enter</kbd> |
-| Cycle priority | <kbd>p</kbd> |
-| **Filtering** ||
-| Cycle categories | <kbd>c</kbd> |
-| Show/hide help | <kbd>?</kbd> <kbd>F1</kbd> |
-| Quit | <kbd>q</kbd> <kbd>Ctrl+c</kbd> |
+| Action              | Keys                                   |
+| ------------------- | -------------------------------------- |
+| **Navigation**      |                                        |
+| Move cursor down    | <kbd>j</kbd> <kbd>↓</kbd>              |
+| Move cursor up      | <kbd>k</kbd> <kbd>↑</kbd>              |
+| Next page           | <kbd>n</kbd> <kbd>→</kbd> <kbd>l</kbd> |
+| Previous page       | <kbd>b</kbd> <kbd>←</kbd> <kbd>h</kbd> |
+| Switch tabs         | <kbd>tab</kbd> <kbd>t</kbd>            |
+| **Task Management** |                                        |
+| Add task            | <kbd>a</kbd>                           |
+| Edit task           | <kbd>e</kbd>                           |
+| Delete task         | <kbd>d</kbd>                           |
+| Toggle completion   | <kbd>space</kbd> <kbd>enter</kbd>      |
+| Cycle priority      | <kbd>p</kbd>                           |
+| **Filtering**       |                                        |
+| Cycle categories    | <kbd>c</kbd>                           |
+| Show/hide help      | <kbd>?</kbd> <kbd>F1</kbd>             |
+| Quit                | <kbd>q</kbd> <kbd>Ctrl+c</kbd>         |
 
 ## 🔧 Configuration
 
@@ -195,66 +209,66 @@ The configuration file is divided into these main sections:
 
 ```yaml
 general:
-  default_category: "Uncategorized"  # Default category for new tasks
-  show_status_bar: true              # Show status bar at bottom
-  tasks_per_page: 10                 # Number of tasks to show per page
-  clear_status_after_seconds: 3      # Time before status messages disappear
+  default_category: "Uncategorized" # Default category for new tasks
+  show_status_bar: true # Show status bar at bottom
+  tasks_per_page: 10 # Number of tasks to show per page
+  clear_status_after_seconds: 3 # Time before status messages disappear
 ```
 
 #### 2. UI Settings
 
 ```yaml
 ui:
-  show_header: true               # Show app header
-  header_format: "TUIODO"         # Header text
-  show_categories: true           # Show category labels
-  show_priorities: true           # Show priority indicators
-  show_due_dates: true            # Show due dates
-  task_separator: "─"             # Character used to separate tasks
-  enable_tabs: true               # Show tab bar
-  enable_borders: true            # Show container borders
-  border_style: "rounded"         # Border style (rounded, normal, double, thick, none)
-  date_format: "2006-01-02"       # Go date format
-  cursor_indicator: "→ "          # Cursor symbol
-  checkbox_done: "[✓]"            # Completed task checkbox
-  checkbox_pending: "[ ]"         # Pending task checkbox
+  show_header: true # Show app header
+  header_format: "TUIODO" # Header text
+  show_categories: true # Show category labels
+  show_priorities: true # Show priority indicators
+  show_due_dates: true # Show due dates
+  task_separator: "─" # Character used to separate tasks
+  enable_tabs: true # Show tab bar
+  enable_borders: true # Show container borders
+  border_style: "rounded" # Border style (rounded, normal, double, thick, none)
+  date_format: "2006-01-02" # Go date format
+  cursor_indicator: "→ " # Cursor symbol
+  checkbox_done: "[✓]" # Completed task checkbox
+  checkbox_pending: "[ ]" # Pending task checkbox
 ```
 
 #### 3. Color Settings
 
 ```yaml
 colors:
-  color_mode: "auto"              # Color mode (auto, true_color, 256, 16, none)
-  theme: "default"                # Color theme (default, dark, light, custom)
-  primary: "#7C3AED"              # Primary color (purple)
-  secondary: "#2563EB"            # Secondary color (blue)
-  tertiary: "#10B981"             # Tertiary color (green)
-  success: "#10B981"              # Success color (green)
-  warning: "#F59E0B"              # Warning color (amber)
-  error: "#EF4444"                # Error color (red)
-  text: "#F9FAFB"                 # Main text color
-  text_dim: "#E5E7EB"             # Dimmed text
-  text_muted: "#9CA3AF"           # Muted text
-  highlight: "#C4B5FD"            # Highlight color
-  border: "#4B5563"               # Border color
-  border_focus: "#8B5CF6"         # Focused border color
-  subtle: "#374151"               # Subtle color
-  
+  color_mode: "auto" # Color mode (auto, true_color, 256, 16, none)
+  theme: "default" # Color theme (default, dark, light, custom)
+  primary: "#7C3AED" # Primary color (purple)
+  secondary: "#2563EB" # Secondary color (blue)
+  tertiary: "#10B981" # Tertiary color (green)
+  success: "#10B981" # Success color (green)
+  warning: "#F59E0B" # Warning color (amber)
+  error: "#EF4444" # Error color (red)
+  text: "#F9FAFB" # Main text color
+  text_dim: "#E5E7EB" # Dimmed text
+  text_muted: "#9CA3AF" # Muted text
+  highlight: "#C4B5FD" # Highlight color
+  border: "#4B5563" # Border color
+  border_focus: "#8B5CF6" # Focused border color
+  subtle: "#374151" # Subtle color
+
   # Task priorities
-  priority_high: "#EF4444"        # High priority (red)
-  priority_medium: "#F59E0B"      # Medium priority (amber)
-  priority_low: "#10B981"         # Low priority (green)
-  
+  priority_high: "#EF4444" # High priority (red)
+  priority_medium: "#F59E0B" # Medium priority (amber)
+  priority_low: "#10B981" # Low priority (green)
+
   # Task status
-  task_done: "#9CA3AF"            # Completed task color
-  task_pending: "#F9FAFB"         # Pending task color
-  
+  task_done: "#9CA3AF" # Completed task color
+  task_pending: "#F9FAFB" # Pending task color
+
   # Custom category colors
   category_colors:
-    Work: "#3B82F6"               # Blue
-    Personal: "#EC4899"           # Pink
-    Health: "#10B981"             # Green
-    Finance: "#6366F1"            # Indigo
+    Work: "#3B82F6" # Blue
+    Personal: "#EC4899" # Pink
+    Health: "#10B981" # Green
+    Finance: "#6366F1" # Indigo
 ```
 
 #### 4. Key Bindings
@@ -280,11 +294,11 @@ keybindings:
 
 ```yaml
 storage:
-  file_path: "TODO.md"                    # Path to task storage file
-  backup_directory: "~/.config/tuiodo/backups"  # Backup directory
-  auto_save: true                         # Save automatically on changes
-  backup_on_save: true                    # Create backups when saving
-  max_backups: 5                          # Maximum number of backups to keep
+  file_path: "TODO.md" # Path to task storage file
+  backup_directory: "~/.config/tuiodo/backups" # Backup directory
+  auto_save: true # Save automatically on changes
+  backup_on_save: true # Create backups when saving
+  max_backups: 5 # Maximum number of backups to keep
 ```
 
 ## 📝 Storage Format
@@ -335,9 +349,9 @@ Create a custom theme by defining your own colors in the config:
 colors:
   # Use a light theme
   theme: "custom"
-  primary: "#8B5CF6"    # Purple
-  secondary: "#3B82F6"  # Blue
-  text: "#1F2937"       # Dark gray
+  primary: "#8B5CF6" # Purple
+  secondary: "#3B82F6" # Blue
+  text: "#1F2937" # Dark gray
   background: "#F9FAFB" # Light gray
   # ... other color settings
 ```
@@ -378,4 +392,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) - The amazing TUI framework
 - [Lip Gloss](https://github.com/charmbracelet/lipgloss) - Style definitions for terminal applications
-- [Charm](https://charm.sh/) - For their suite of beautiful terminal tools 
+- [Charm](https://charm.sh/) - For their suite of beautiful terminal tools
