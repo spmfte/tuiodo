@@ -65,9 +65,18 @@ func View(m model.Model) string {
 func renderHeader(m model.Model, styles map[string]lipgloss.Style, width int) string {
 	var titleBar strings.Builder
 
+	// Get app info
+	version, commit, _ := GetAppInfo()
+
+	// Format version string
+	versionStr := "v" + version
+	if commit != "" {
+		versionStr += " (" + commit + ")"
+	}
+
 	// App title with version badge
 	title := styles["title"].Render("TUIODO")
-	version := styles["versionBadge"].Render("v1.0")
+	versionBadge := styles["versionBadge"].Render(versionStr)
 
 	// Filter indicator if a category filter is active
 	filterLabel := ""
@@ -76,14 +85,14 @@ func renderHeader(m model.Model, styles map[string]lipgloss.Style, width int) st
 	}
 
 	// Assemble the title bar with correct spacing
-	emptySpace := width - lipgloss.Width(title) - lipgloss.Width(version) - lipgloss.Width(filterLabel) - 4
+	emptySpace := width - lipgloss.Width(title) - lipgloss.Width(versionBadge) - lipgloss.Width(filterLabel) - 4
 	if emptySpace < 0 {
 		emptySpace = 0
 	}
 
 	titleBar.WriteString(title)
 	titleBar.WriteString(" ")
-	titleBar.WriteString(version)
+	titleBar.WriteString(versionBadge)
 	titleBar.WriteString(strings.Repeat(" ", emptySpace))
 	titleBar.WriteString(filterLabel)
 
@@ -256,15 +265,49 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 
 // renderStatusBar creates the status bar at the bottom
 func renderStatusBar(m model.Model, styles map[string]lipgloss.Style, width int) string {
-	// Default help text
-	statusText := "Press ? for help"
+	var statusBar strings.Builder
 
 	// Show temporary status message if set
+	var statusText string
 	if m.StatusMessage != "" {
 		statusText = m.StatusMessage
+	} else {
+		// Default help text when no status message
+		statusText = "Press ? for help"
 	}
 
-	return styles["statusBar"].Render(statusText)
+	// Left side: status message or help text
+	leftSide := statusText
+
+	// Right side: storage info and task stats
+	totalTasks := len(m.Tasks)
+	doneTasks := 0
+	for _, t := range m.Tasks {
+		if t.Done {
+			doneTasks++
+		}
+	}
+
+	// Format stats with progress percentage
+	var progressPct float64
+	if totalTasks > 0 {
+		progressPct = float64(doneTasks) / float64(totalTasks) * 100
+	}
+
+	rightSide := fmt.Sprintf("%d/%d tasks complete (%.0f%%)", doneTasks, totalTasks, progressPct)
+
+	// Determine spacing
+	spacerWidth := width - lipgloss.Width(leftSide) - lipgloss.Width(rightSide)
+	if spacerWidth < 1 {
+		spacerWidth = 1
+	}
+
+	// Compose the status bar
+	statusBar.WriteString(leftSide)
+	statusBar.WriteString(strings.Repeat(" ", spacerWidth))
+	statusBar.WriteString(rightSide)
+
+	return styles["statusBar"].Render(statusBar.String())
 }
 
 // renderHelpScreen creates a comprehensive help screen

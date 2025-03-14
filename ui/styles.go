@@ -22,6 +22,29 @@ type Colors struct {
 	Background  lipgloss.Color
 }
 
+// Global variables to store the current styles and colors
+var (
+	currentColors Colors
+	currentStyles map[string]lipgloss.Style
+
+	// App info
+	appVersion   string
+	appCommit    string
+	appBuildTime string
+)
+
+// SetAppInfo sets the application version information
+func SetAppInfo(version, commit, buildTime string) {
+	appVersion = version
+	appCommit = commit
+	appBuildTime = buildTime
+}
+
+// GetAppInfo returns the application version information
+func GetAppInfo() (string, string, string) {
+	return appVersion, appCommit, appBuildTime
+}
+
 // AppColors returns the color palette for the application with a modern aesthetic
 func AppColors() Colors {
 	return Colors{
@@ -40,6 +63,41 @@ func AppColors() Colors {
 		Subtle:      lipgloss.Color("#374151"), // Very dark gray
 		Background:  lipgloss.Color("#1F2937"), // Dark blue-gray
 	}
+}
+
+// init initializes the styles when the package is loaded
+func init() {
+	// Setup default colors and styles
+	currentColors = AppColors()
+	currentStyles = CreateStyles(currentColors)
+}
+
+// GetStyle returns a style by name
+func GetStyle(name string) lipgloss.Style {
+	if style, ok := currentStyles[name]; ok {
+		return style
+	}
+	return lipgloss.NewStyle() // Return a default style if not found
+}
+
+// UpdateStyles updates the global styles with the provided configuration
+func UpdateStyles(styles interface{}) {
+	// This is a simplified implementation
+	// In a real implementation, this would parse the provided styles config
+	// and update currentStyles and currentColors accordingly
+
+	// For now, we'll just ensure the default styles are loaded
+	// if they haven't been already
+	if currentStyles == nil {
+		currentColors = AppColors()
+		currentStyles = CreateStyles(currentColors)
+	}
+
+	// When integrating with the config system fully, this would:
+	// 1. Extract colors from the config
+	// 2. Create a new Colors struct
+	// 3. Generate new styles based on these colors
+	// 4. Update currentColors and currentStyles
 }
 
 // CreateStyles returns the styles for the application

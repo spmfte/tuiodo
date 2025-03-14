@@ -84,6 +84,35 @@ func NewModel(tasks []Task) Model {
 	}
 }
 
+// NewModelWithConfig creates a new model with configuration options
+func NewModelWithConfig(tasks []Task, tasksPerPage int, defaultCategory string, keyBindings interface{}) Model {
+	// Create a basic model first
+	m := NewModel(tasks)
+
+	// Apply configuration
+	if tasksPerPage > 0 {
+		m.Pagination.ItemsPerPage = tasksPerPage
+	}
+
+	// Set default filter to the default category if specified
+	if defaultCategory != "" {
+		// First check if this category exists
+		if _, exists := m.Categories[defaultCategory]; exists {
+			m.CurrentFilter = defaultCategory
+			m.CurrentView = TabCategory
+			m.CurrentCategory = defaultCategory
+		}
+	}
+
+	// Key bindings would be used in the handlers package, but we'll store them
+	// in the model for now (or they could be stored in a global variable)
+
+	// Recalculate pagination based on the configured settings
+	m.recalculatePagination()
+
+	return m
+}
+
 // GetFilteredTasks returns tasks filtered by the current tab view and filters
 func (m Model) GetFilteredTasks() []Task {
 	var filteredTasks []Task
