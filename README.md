@@ -1,5 +1,7 @@
 # 🪄 TUIODO - A Modern Terminal Task Manager
 
+TUIODO is a feature-rich, terminal-based task management application built with Go. It provides an intuitive, keyboard-driven interface with mouse support, making it easy to manage your tasks directly from the terminal.
+
 <p align="center">
   <img src="https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Version">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
@@ -19,10 +21,11 @@
 ### 🌈 Core Features
 
 - **Gorgeous Modern UI** with clean typography and visual hierarchy
-- **Brilliant Colors** that automatically adapt to your terminal's capabilities
+- **Brilliant Colors** with monochrome mode support (`--no-color`)
 - **Mouse Support** with hover effects and click interactions (where supported)
 - **Keyboard-Driven** workflow with intuitive, vim-inspired shortcuts
 - **Instant Performance** with optimized rendering and caching
+- **Comprehensive CLI** with extensive configuration options
 
 ### 📋 Task Management
 
@@ -129,21 +132,27 @@ go build
 
 ## 🎮 Quick Start
 
-### Basic Usage
+### Command-line Options
 
-1. Launch TUIODO in your terminal: `tuiodo`
-2. Add a new task: Press `a`
-3. Toggle task completion: Press `space` or `enter`
-4. Delete a task: Press `d`
-5. Edit a task: Press `e`
-6. Get help: Press `?`
-
-### Task Format
-
-When adding tasks, you can specify categories using the format:
-
-```
-Category: Task description
+```bash
+Options:
+  -h, --help                    Show this help message
+  -v, --version                 Show version information
+  -c, --config <path>          Path to config file
+  --create-default-config       Create default configuration file and exit
+  --print-config               Print current configuration and exit
+  -s, --storage <path>         Path to storage file (overrides config)
+  -t, --tasks-per-page <num>   Number of tasks per page (overrides config)
+  --debug                      Enable debug mode with detailed logging
+  --no-mouse                   Disable mouse support
+  --no-color                   Disable color output
+  --backup-dir <path>          Set backup directory (overrides config)
+  --max-backups <num>          Set maximum number of backups (overrides config)
+  --no-auto-save              Disable auto-save feature
+  --no-backup                  Disable backup on save
+  --category <name>            Start with specific category filter
+  --sort <field>              Initial sort field (priority|created|category)
+  --view <type>               Initial view (all|pending|completed)
 ```
 
 For example:
@@ -161,20 +170,26 @@ Use the `p` key to cycle through priority levels for the selected task:
 ### Command-line Options
 
 ```bash
+# Basic usage
+tuiodo
+
 # Use a specific config file
 tuiodo --config ~/.config/tuiodo/my-config.yaml
 
 # Use a different storage file
 tuiodo --storage ~/projects/work-tasks.md
 
-# Configure items per page
-tuiodo --tasks-per-page 15
+# Start with specific view and sorting
+tuiodo --view pending --sort priority
 
-# Create a default config file
-tuiodo --create-default-config
+# Terminal-friendly mode
+tuiodo --no-mouse --no-color
 
-# Print your current configuration
-tuiodo --print-config
+# Configure backup behavior
+tuiodo --backup-dir ~/backups --max-backups 10
+
+# Start with specific category and view
+tuiodo --category Work --view pending
 ```
 
 ## ⌨️ Keyboard Controls
