@@ -64,22 +64,22 @@ func GetStyles(cfg Config) Styles {
 	}
 
 	// Parse colors
-	primaryColor, _ := ParseColor(cfg.Colors.Primary)
-	secondaryColor, _ := ParseColor(cfg.Colors.Secondary)
-	tertiaryColor, _ := ParseColor(cfg.Colors.Tertiary)
-	successColor, _ := ParseColor(cfg.Colors.Success)
-	warningColor, _ := ParseColor(cfg.Colors.Warning)
-	errorColor, _ := ParseColor(cfg.Colors.Error)
-	textColor, _ := ParseColor(cfg.Colors.Text)
-	textDimColor, _ := ParseColor(cfg.Colors.TextDim)
-	textMutedColor, _ := ParseColor(cfg.Colors.TextMuted)
-	borderColor, _ := ParseColor(cfg.Colors.Border)
-	borderFocusColor, _ := ParseColor(cfg.Colors.BorderFocus)
-	subtleColor, _ := ParseColor(cfg.Colors.Subtle)
-	priorityHighColor, _ := ParseColor(cfg.Colors.PriorityHigh)
-	priorityMediumColor, _ := ParseColor(cfg.Colors.PriorityMedium)
-	priorityLowColor, _ := ParseColor(cfg.Colors.PriorityLow)
-	taskDoneColor, _ := ParseColor(cfg.Colors.TaskDone)
+	primaryColor := lipgloss.Color(cfg.Colors.Primary)
+	secondaryColor := lipgloss.Color(cfg.Colors.Secondary)
+	tertiaryColor := lipgloss.Color(cfg.Colors.Tertiary)
+	successColor := lipgloss.Color(cfg.Colors.Success)
+	warningColor := lipgloss.Color(cfg.Colors.Warning)
+	errorColor := lipgloss.Color(cfg.Colors.Error)
+	textColor := lipgloss.Color(cfg.Colors.Text)
+	textDimColor := lipgloss.Color(cfg.Colors.TextDim)
+	textMutedColor := lipgloss.Color(cfg.Colors.TextMuted)
+	borderColor := lipgloss.Color(cfg.Colors.Border)
+	borderFocusColor := lipgloss.Color(cfg.Colors.BorderFocus)
+	subtleColor := lipgloss.Color(cfg.Colors.Subtle)
+	priorityHighColor := lipgloss.Color(cfg.Colors.PriorityHigh)
+	priorityMediumColor := lipgloss.Color(cfg.Colors.PriorityMedium)
+	priorityLowColor := lipgloss.Color(cfg.Colors.PriorityLow)
+	taskDoneColor := lipgloss.Color(cfg.Colors.TaskDone)
 
 	// Initialize styles
 	s.Title = lipgloss.NewStyle().

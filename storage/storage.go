@@ -13,7 +13,16 @@ import (
 )
 
 // DefaultTodoFilePath is the default path for the TODO file
-const DefaultTodoFilePath = "TODO.md"
+var DefaultTodoFilePath string
+
+func init() {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		DefaultTodoFilePath = "TODO.md"
+	} else {
+		DefaultTodoFilePath = filepath.Join(homeDir, "TODO.md")
+	}
+}
 
 // Storage configuration
 var (
@@ -27,13 +36,19 @@ var (
 
 // Regex patterns for parsing metadata - compile only once for better performance
 var (
-	priorityPattern = regexp.MustCompile(`@priority:(high|medium|low)`)
-	dueDatePattern  = regexp.MustCompile(`@due:(\d{4}-\d{2}-\d{2})`)
+	priorityPattern  = regexp.MustCompile(`@priority:(high|medium|low|critical)`)
+	createdAtPattern = regexp.MustCompile(`@created:(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)`)
 )
 
 // Initialize sets up the storage with configurable settings
 func Initialize(filePath string, backupDir string, maxBackupFiles int, enableAutoSave bool, enableBackup bool) {
 	if filePath != "" {
+		// If path is not absolute, make it absolute from current directory
+		if !filepath.IsAbs(filePath) {
+			if absPath, err := filepath.Abs(filePath); err == nil {
+				filePath = absPath
+			}
+		}
 		todoFilePath = filePath
 	} else {
 		todoFilePath = DefaultTodoFilePath
@@ -102,6 +117,8 @@ func LoadTasks() []model.Task {
 			if len(priorityMatch) > 1 {
 				priorityStr := priorityMatch[1]
 				switch priorityStr {
+				case "critical":
+					priority = model.PriorityCritical
 				case "high":
 					priority = model.PriorityHigh
 				case "medium":
@@ -115,13 +132,15 @@ func LoadTasks() []model.Task {
 				description = strings.TrimSpace(priorityPattern.ReplaceAllString(description, ""))
 			}
 
-			// Extract due date if present
-			dueDate := ""
-			dueDateMatch := dueDatePattern.FindStringSubmatch(description)
-			if len(dueDateMatch) > 1 {
-				dueDate = dueDateMatch[1]
-				// Remove the due date tag from description
-				description = strings.TrimSpace(dueDatePattern.ReplaceAllString(description, ""))
+			// Extract creation date if present
+			createdAt := time.Now() // Default to now if not found
+			createdAtMatch := createdAtPattern.FindStringSubmatch(description)
+			if len(createdAtMatch) > 1 {
+				if parsedTime, err := time.Parse(time.RFC3339, createdAtMatch[1]); err == nil {
+					createdAt = parsedTime
+				}
+				// Remove the created tag from description
+				description = strings.TrimSpace(createdAtPattern.ReplaceAllString(description, ""))
 			}
 
 			tasks = append(tasks, model.Task{
@@ -129,7 +148,7 @@ func LoadTasks() []model.Task {
 				Done:        isDone,
 				Category:    currentCategory,
 				Priority:    priority,
-				DueDate:     dueDate,
+				CreatedAt:   createdAt,
 			})
 		}
 	}
@@ -181,14 +200,18 @@ func SaveTasks(tasks []model.Task) error {
 				description = fmt.Sprintf("%s @priority:%s", description, task.Priority)
 			}
 
-			// Add due date tag if set
-			if task.DueDate != "" {
-				description = fmt.Sprintf("%s @due:%s", description, task.DueDate)
-			}
+			// Add creation date
+			description = fmt.Sprintf("%s @created:%s", description, task.CreatedAt.UTC().Format(time.RFC3339))
 
 			content.WriteString(fmt.Sprintf("- [%s] %s\n", checkmark, description))
 		}
 		content.WriteString("\n")
+	}
+
+	// Ensure the directory exists
+	dir := filepath.Dir(todoFilePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
 	}
 
 	return os.WriteFile(todoFilePath, []byte(content.String()), 0644)

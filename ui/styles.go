@@ -12,6 +12,7 @@ type Colors struct {
 	Success     lipgloss.Color
 	Warning     lipgloss.Color
 	Error       lipgloss.Color
+	Critical    lipgloss.Color
 	Text        lipgloss.Color
 	TextDim     lipgloss.Color
 	TextMuted   lipgloss.Color
@@ -20,6 +21,12 @@ type Colors struct {
 	BorderFocus lipgloss.Color
 	Subtle      lipgloss.Color
 	Background  lipgloss.Color
+
+	// Category colors
+	CategoryWork     lipgloss.Color
+	CategoryPersonal lipgloss.Color
+	CategoryHealth   lipgloss.Color
+	CategoryFinance  lipgloss.Color
 }
 
 // Global variables to store the current styles and colors
@@ -54,6 +61,7 @@ func AppColors() Colors {
 		Success:     lipgloss.Color("#10B981"), // Green
 		Warning:     lipgloss.Color("#F59E0B"), // Amber
 		Error:       lipgloss.Color("#EF4444"), // Red
+		Critical:    lipgloss.Color("#991B1B"), // Dark Red
 		Text:        lipgloss.Color("#F9FAFB"), // Nearly white
 		TextDim:     lipgloss.Color("#E5E7EB"), // Light gray
 		TextMuted:   lipgloss.Color("#9CA3AF"), // Medium gray
@@ -62,6 +70,12 @@ func AppColors() Colors {
 		BorderFocus: lipgloss.Color("#8B5CF6"), // Medium purple
 		Subtle:      lipgloss.Color("#374151"), // Very dark gray
 		Background:  lipgloss.Color("#1F2937"), // Dark blue-gray
+
+		// Category colors
+		CategoryWork:     lipgloss.Color("#3B82F6"), // Blue
+		CategoryPersonal: lipgloss.Color("#EC4899"), // Pink
+		CategoryHealth:   lipgloss.Color("#10B981"), // Green
+		CategoryFinance:  lipgloss.Color("#6366F1"), // Indigo
 	}
 }
 
@@ -255,6 +269,13 @@ func CreateStyles(colors Colors) map[string]lipgloss.Style {
 			Margin(0, 1, 0, 0).
 			Bold(true),
 
+		"priorityCritical": lipgloss.NewStyle().
+			Foreground(colors.Critical).
+			Background(colors.Error).
+			Padding(0, 1).
+			Margin(0, 1, 0, 0).
+			Bold(true),
+
 		"priorityMedium": lipgloss.NewStyle().
 			Foreground(colors.Warning).
 			Padding(0, 1).
@@ -296,5 +317,31 @@ func CreateStyles(colors Colors) map[string]lipgloss.Style {
 			Bold(true).
 			Padding(0, 2).
 			MarginRight(1),
+
+		// Date styles
+		"date": lipgloss.NewStyle().
+			Foreground(colors.TextMuted).
+			Width(10),
+
+		// Category-specific styles
+		"category_work": lipgloss.NewStyle().
+			Foreground(colors.CategoryWork).
+			Italic(true).
+			Padding(0, 1),
+
+		"category_personal": lipgloss.NewStyle().
+			Foreground(colors.CategoryPersonal).
+			Italic(true).
+			Padding(0, 1),
+
+		"category_health": lipgloss.NewStyle().
+			Foreground(colors.CategoryHealth).
+			Italic(true).
+			Padding(0, 1),
+
+		"category_finance": lipgloss.NewStyle().
+			Foreground(colors.CategoryFinance).
+			Italic(true).
+			Padding(0, 1),
 	}
 }

@@ -1,13 +1,19 @@
 package model
 
+import (
+	"sort"
+	"time"
+)
+
 // Priority represents a task priority level
 type Priority string
 
 const (
-	PriorityNone   Priority = ""
-	PriorityLow    Priority = "low"
-	PriorityMedium Priority = "medium"
-	PriorityHigh   Priority = "high"
+	PriorityNone     Priority = ""
+	PriorityLow      Priority = "low"
+	PriorityMedium   Priority = "medium"
+	PriorityHigh     Priority = "high"
+	PriorityCritical Priority = "critical"
 )
 
 // Task represents a single TODO item
@@ -16,7 +22,7 @@ type Task struct {
 	Done        bool
 	Category    string
 	Priority    Priority
-	DueDate     string // Format: "YYYY-MM-DD" or empty string
+	CreatedAt   time.Time // When the task was created
 }
 
 // TabView represents the current view/filter mode
@@ -28,6 +34,15 @@ const (
 	TabPending   TabView = "pending"
 	TabCompleted TabView = "completed"
 	TabCategory  TabView = "category" // Filtered by specific category
+)
+
+// SortType represents different ways to sort tasks
+type SortType string
+
+const (
+	SortByPriority  SortType = "priority"
+	SortByCreatedAt SortType = "created"
+	SortByCategory  SortType = "category"
 )
 
 // Model represents the application state
@@ -56,6 +71,15 @@ type Pagination struct {
 	TotalPages    int
 	ItemsPerPage  int
 	CurrentOffset int
+}
+
+// priorityValue maps priorities to numeric values for sorting
+var priorityValue = map[Priority]int{
+	PriorityCritical: 5,
+	PriorityHigh:     4,
+	PriorityMedium:   3,
+	PriorityLow:      2,
+	PriorityNone:     1,
 }
 
 // NewModel creates a new model with initial state
@@ -244,7 +268,7 @@ func (m *Model) CyclePriority() {
 		return
 	}
 
-	priorities := []Priority{PriorityNone, PriorityLow, PriorityMedium, PriorityHigh}
+	priorities := []Priority{PriorityNone, PriorityLow, PriorityMedium, PriorityHigh, PriorityCritical}
 
 	// Find current priority position
 	currentIndex := 0
@@ -269,6 +293,7 @@ func (m *Model) AddTask(description, category string) {
 	m.Tasks = append(m.Tasks, Task{
 		Description: description,
 		Category:    category,
+		CreatedAt:   time.Now(),
 	})
 }
 
@@ -414,4 +439,22 @@ func (m *Model) RecalculatePagination() {
 // SetStatus sets a temporary status message
 func (m *Model) SetStatus(message string) {
 	m.StatusMessage = message
+}
+
+// SortTasks sorts the tasks based on the specified sort type
+func (m *Model) SortTasks(sortType SortType) {
+	switch sortType {
+	case SortByPriority:
+		sort.SliceStable(m.Tasks, func(i, j int) bool {
+			return priorityValue[m.Tasks[i].Priority] > priorityValue[m.Tasks[j].Priority]
+		})
+	case SortByCreatedAt:
+		sort.SliceStable(m.Tasks, func(i, j int) bool {
+			return m.Tasks[i].CreatedAt.After(m.Tasks[j].CreatedAt)
+		})
+	case SortByCategory:
+		sort.SliceStable(m.Tasks, func(i, j int) bool {
+			return m.Tasks[i].Category < m.Tasks[j].Category
+		})
+	}
 }

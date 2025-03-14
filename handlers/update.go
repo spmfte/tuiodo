@@ -119,6 +119,15 @@ func handleKeypress(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 		m.PrevPage()
 	case "?", "F1": // Show help
 		m.HelpVisible = true
+	case "s": // Sort tasks
+		m.SortTasks(model.SortByPriority)
+		m.SetStatus("Sorted by priority")
+	case "S": // Sort by creation date
+		m.SortTasks(model.SortByCreatedAt)
+		m.SetStatus("Sorted by creation date")
+	case "C": // Sort by category
+		m.SortTasks(model.SortByCategory)
+		m.SetStatus("Sorted by category")
 	}
 
 	return m, nil

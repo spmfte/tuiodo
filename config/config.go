@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/charmbracelet/lipgloss"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,6 +21,9 @@ type Config struct {
 	Colors      ColorsConfig      `yaml:"colors"`
 	Keybindings KeybindingsConfig `yaml:"keybindings"`
 	Storage     StorageConfig     `yaml:"storage"`
+	Display     DisplayConfig     `yaml:"display"`
+	Files       FilesConfig       `yaml:"files"`
+	Sort        SortConfig        `yaml:"sort"`
 }
 
 // GeneralConfig contains general application settings
@@ -47,10 +51,10 @@ type UIConfig struct {
 	CheckboxPending string `yaml:"checkbox_pending"`
 }
 
-// ColorsConfig contains color schemes
+// ColorsConfig contains color-related settings
 type ColorsConfig struct {
-	ColorMode      string            `yaml:"color_mode"` // auto, true_color, 256, 16, none
-	Theme          string            `yaml:"theme"`      // default, dark, light, custom
+	Theme          string            `yaml:"theme"`
+	ColorMode      string            `yaml:"color_mode"`
 	Primary        string            `yaml:"primary"`
 	Secondary      string            `yaml:"secondary"`
 	Tertiary       string            `yaml:"tertiary"`
@@ -64,15 +68,16 @@ type ColorsConfig struct {
 	Border         string            `yaml:"border"`
 	BorderFocus    string            `yaml:"border_focus"`
 	Subtle         string            `yaml:"subtle"`
+	Background     string            `yaml:"background"`
 	PriorityHigh   string            `yaml:"priority_high"`
 	PriorityMedium string            `yaml:"priority_medium"`
 	PriorityLow    string            `yaml:"priority_low"`
 	TaskDone       string            `yaml:"task_done"`
 	TaskPending    string            `yaml:"task_pending"`
-	CategoryColors map[string]string `yaml:"category_colors"` // Map category names to specific colors
+	CategoryColors map[string]string `yaml:"category_colors"`
 }
 
-// KeybindingsConfig contains keyboard shortcuts
+// KeybindingsConfig contains keybinding settings
 type KeybindingsConfig struct {
 	QuitKey           []string `yaml:"quit"`
 	AddTaskKey        []string `yaml:"add_task"`
@@ -98,22 +103,89 @@ type StorageConfig struct {
 	MaxBackups      int    `yaml:"max_backups"`
 }
 
+// DisplayConfig contains display-related settings
+type DisplayConfig struct {
+	ShowDates bool `yaml:"show_dates"` // Whether to show creation dates for tasks
+}
+
+// FilesConfig contains file-related settings
+type FilesConfig struct {
+	GlobalTodoFile    string   `yaml:"global_todo_file"`    // Path to global todo file
+	DirectoryTodoFile string   `yaml:"directory_todo_file"` // Name of directory-specific todo files
+	ActiveFile        string   `yaml:"active_file"`         // Currently active todo file
+	ExcludeDirs       []string `yaml:"exclude_dirs"`        // Directories to exclude from todo file search
+}
+
+// SortConfig contains sorting-related settings
+type SortConfig struct {
+	Field     string `yaml:"field"`     // Field to sort by (priority, date, category)
+	Direction string `yaml:"direction"` // Sort direction (asc, desc)
+}
+
+// Colors represents the theme colors configuration
+type Colors struct {
+	Primary     string `yaml:"primary"`
+	Secondary   string `yaml:"secondary"`
+	Tertiary    string `yaml:"tertiary"`
+	Success     string `yaml:"success"`
+	Warning     string `yaml:"warning"`
+	Error       string `yaml:"error"`
+	Critical    string `yaml:"critical"`
+	Text        string `yaml:"text"`
+	TextDim     string `yaml:"text_dim"`
+	TextMuted   string `yaml:"text_muted"`
+	Highlight   string `yaml:"highlight"`
+	Border      string `yaml:"border"`
+	BorderFocus string `yaml:"border_focus"`
+	Subtle      string `yaml:"subtle"`
+	Background  string `yaml:"background"`
+}
+
+// DefaultColors returns the default color theme
+func DefaultColors() Colors {
+	return Colors{
+		Primary:     "#7C3AED", // Purple
+		Secondary:   "#2563EB", // Blue
+		Tertiary:    "#10B981", // Green
+		Success:     "#10B981", // Green
+		Warning:     "#F59E0B", // Amber
+		Error:       "#EF4444", // Red
+		Critical:    "#991B1B", // Dark Red
+		Text:        "#F9FAFB", // Nearly white
+		TextDim:     "#E5E7EB", // Light gray
+		TextMuted:   "#9CA3AF", // Medium gray
+		Highlight:   "#C4B5FD", // Light purple
+		Border:      "#4B5563", // Dark gray
+		BorderFocus: "#8B5CF6", // Medium purple
+		Subtle:      "#374151", // Very dark gray
+		Background:  "#1F2937", // Dark blue-gray
+	}
+}
+
 // DefaultConfig returns the default configuration
 func DefaultConfig() Config {
+	homeDir, _ := os.UserHomeDir()
+	configDir := filepath.Join(homeDir, ".config", "tuiodo")
+
 	return Config{
 		General: GeneralConfig{
 			DefaultCategory: "Uncategorized",
 			ShowStatusBar:   true,
 			TasksPerPage:    10,
-			ClearStatus:     3,
+			ClearStatus:     5,
+		},
+		Storage: StorageConfig{
+			FilePath:        filepath.Join(homeDir, "TODO.md"),
+			BackupDirectory: filepath.Join(configDir, "backups"),
+			AutoSave:        true,
+			BackupOnSave:    true,
+			MaxBackups:      5,
 		},
 		UI: UIConfig{
 			ShowHeader:      true,
 			HeaderFormat:    "TUIODO",
 			ShowCategories:  true,
 			ShowPriorities:  true,
-			ShowDueDates:    true,
-			TaskSeparator:   "─",
 			EnableTabs:      true,
 			EnableBorders:   true,
 			BorderStyle:     "rounded",
@@ -121,56 +193,63 @@ func DefaultConfig() Config {
 			CursorIndicator: "→ ",
 			CheckboxDone:    "[✓]",
 			CheckboxPending: "[ ]",
+			TaskSeparator:   "─",
 		},
 		Colors: ColorsConfig{
-			ColorMode:      "auto",
 			Theme:          "default",
-			Primary:        "#7C3AED", // Purple
-			Secondary:      "#2563EB", // Blue
-			Tertiary:       "#10B981", // Green
-			Success:        "#10B981", // Green
-			Warning:        "#F59E0B", // Amber
-			Error:          "#EF4444", // Red
-			Text:           "#F9FAFB", // Nearly white
-			TextDim:        "#E5E7EB", // Light gray
-			TextMuted:      "#9CA3AF", // Medium gray
-			Highlight:      "#C4B5FD", // Light purple
-			Border:         "#4B5563", // Dark gray
-			BorderFocus:    "#8B5CF6", // Medium purple
-			Subtle:         "#374151", // Very dark gray
-			PriorityHigh:   "#EF4444", // Red
-			PriorityMedium: "#F59E0B", // Amber
-			PriorityLow:    "#10B981", // Green
-			TaskDone:       "#9CA3AF", // Medium gray
-			TaskPending:    "#F9FAFB", // Nearly white
+			ColorMode:      "auto",
+			Primary:        "#7C3AED",
+			Secondary:      "#2563EB",
+			Tertiary:       "#10B981",
+			Success:        "#10B981",
+			Warning:        "#F59E0B",
+			Error:          "#EF4444",
+			Text:           "#F9FAFB",
+			TextDim:        "#E5E7EB",
+			TextMuted:      "#9CA3AF",
+			Highlight:      "#C4B5FD",
+			Border:         "#4B5563",
+			BorderFocus:    "#8B5CF6",
+			Subtle:         "#374151",
+			Background:     "#1F2937",
+			PriorityHigh:   "#DC2626",
+			PriorityMedium: "#F59E0B",
+			PriorityLow:    "#10B981",
+			TaskDone:       "#6B7280",
+			TaskPending:    "#F9FAFB",
 			CategoryColors: map[string]string{
-				"Work":     "#3B82F6", // Blue
-				"Personal": "#EC4899", // Pink
-				"Health":   "#10B981", // Green
-				"Finance":  "#6366F1", // Indigo
+				"Work":     "#3B82F6",
+				"Personal": "#EC4899",
+				"Health":   "#10B981",
+				"Finance":  "#6366F1",
 			},
+		},
+		Display: DisplayConfig{
+			ShowDates: true,
+		},
+		Files: FilesConfig{
+			GlobalTodoFile:    filepath.Join(homeDir, "TODO.md"),
+			DirectoryTodoFile: "TODO.md",
+			ExcludeDirs:       []string{".git", "node_modules"},
+		},
+		Sort: SortConfig{
+			Field:     "priority",
+			Direction: "desc",
 		},
 		Keybindings: KeybindingsConfig{
 			QuitKey:           []string{"q", "ctrl+c"},
 			AddTaskKey:        []string{"a"},
 			EditTaskKey:       []string{"e"},
 			DeleteTaskKey:     []string{"d"},
-			ToggleTaskKey:     []string{"enter", "space"},
+			ToggleTaskKey:     []string{"space", "enter"},
 			CyclePriorityKey:  []string{"p"},
 			CycleCategoryKey:  []string{"c"},
 			CycleTabKey:       []string{"tab", "t"},
-			NextPageKey:       []string{"right", "l", "n"},
-			PrevPageKey:       []string{"left", "h", "b"},
-			MoveCursorUpKey:   []string{"up", "k"},
-			MoveCursorDownKey: []string{"down", "j"},
-			HelpKey:           []string{"?", "F1"},
-		},
-		Storage: StorageConfig{
-			FilePath:        "TODO.md",
-			BackupDirectory: "~/.config/tuiodo/backups",
-			AutoSave:        true,
-			BackupOnSave:    true,
-			MaxBackups:      5,
+			NextPageKey:       []string{"n", "right"},
+			PrevPageKey:       []string{"b", "left"},
+			MoveCursorUpKey:   []string{"k", "up"},
+			MoveCursorDownKey: []string{"j", "down"},
+			HelpKey:           []string{"?", "h", "f1"},
 		},
 	}
 }
@@ -243,8 +322,32 @@ func mergeWithDefaults(config, defaults Config) Config {
 	if config.General.TasksPerPage == 0 {
 		config.General.TasksPerPage = defaults.General.TasksPerPage
 	}
+	if !config.General.ShowStatusBar {
+		config.General.ShowStatusBar = defaults.General.ShowStatusBar
+	}
+	if config.General.ClearStatus == 0 {
+		config.General.ClearStatus = defaults.General.ClearStatus
+	}
 
 	// Merge UI section
+	if !config.UI.ShowHeader {
+		config.UI.ShowHeader = defaults.UI.ShowHeader
+	}
+	if config.UI.HeaderFormat == "" {
+		config.UI.HeaderFormat = defaults.UI.HeaderFormat
+	}
+	if !config.UI.ShowCategories {
+		config.UI.ShowCategories = defaults.UI.ShowCategories
+	}
+	if !config.UI.ShowPriorities {
+		config.UI.ShowPriorities = defaults.UI.ShowPriorities
+	}
+	if !config.UI.EnableTabs {
+		config.UI.EnableTabs = defaults.UI.EnableTabs
+	}
+	if !config.UI.EnableBorders {
+		config.UI.EnableBorders = defaults.UI.EnableBorders
+	}
 	if config.UI.BorderStyle == "" {
 		config.UI.BorderStyle = defaults.UI.BorderStyle
 	}
@@ -275,12 +378,12 @@ func mergeWithDefaults(config, defaults Config) Config {
 		config.Storage.MaxBackups = defaults.Storage.MaxBackups
 	}
 
-	// Ensure proper color settings
-	if config.Colors.ColorMode == "" {
-		config.Colors.ColorMode = defaults.Colors.ColorMode
-	}
+	// Merge Colors section
 	if config.Colors.Theme == "" {
 		config.Colors.Theme = defaults.Colors.Theme
+	}
+	if config.Colors.ColorMode == "" {
+		config.Colors.ColorMode = defaults.Colors.ColorMode
 	}
 	if config.Colors.Primary == "" {
 		config.Colors.Primary = defaults.Colors.Primary
@@ -303,6 +406,42 @@ func mergeWithDefaults(config, defaults Config) Config {
 	if config.Colors.Text == "" {
 		config.Colors.Text = defaults.Colors.Text
 	}
+	if config.Colors.TextDim == "" {
+		config.Colors.TextDim = defaults.Colors.TextDim
+	}
+	if config.Colors.TextMuted == "" {
+		config.Colors.TextMuted = defaults.Colors.TextMuted
+	}
+	if config.Colors.Highlight == "" {
+		config.Colors.Highlight = defaults.Colors.Highlight
+	}
+	if config.Colors.Border == "" {
+		config.Colors.Border = defaults.Colors.Border
+	}
+	if config.Colors.BorderFocus == "" {
+		config.Colors.BorderFocus = defaults.Colors.BorderFocus
+	}
+	if config.Colors.Subtle == "" {
+		config.Colors.Subtle = defaults.Colors.Subtle
+	}
+	if config.Colors.Background == "" {
+		config.Colors.Background = defaults.Colors.Background
+	}
+	if config.Colors.PriorityHigh == "" {
+		config.Colors.PriorityHigh = defaults.Colors.PriorityHigh
+	}
+	if config.Colors.PriorityMedium == "" {
+		config.Colors.PriorityMedium = defaults.Colors.PriorityMedium
+	}
+	if config.Colors.PriorityLow == "" {
+		config.Colors.PriorityLow = defaults.Colors.PriorityLow
+	}
+	if config.Colors.TaskDone == "" {
+		config.Colors.TaskDone = defaults.Colors.TaskDone
+	}
+	if config.Colors.TaskPending == "" {
+		config.Colors.TaskPending = defaults.Colors.TaskPending
+	}
 
 	// Initialize category colors if missing
 	if config.Colors.CategoryColors == nil {
@@ -314,6 +453,30 @@ func mergeWithDefaults(config, defaults Config) Config {
 		if _, exists := config.Colors.CategoryColors[category]; !exists {
 			config.Colors.CategoryColors[category] = color
 		}
+	}
+
+	// Merge Display section
+	if !config.Display.ShowDates {
+		config.Display.ShowDates = defaults.Display.ShowDates
+	}
+
+	// Merge Files section
+	if config.Files.GlobalTodoFile == "" {
+		config.Files.GlobalTodoFile = defaults.Files.GlobalTodoFile
+	}
+	if config.Files.DirectoryTodoFile == "" {
+		config.Files.DirectoryTodoFile = defaults.Files.DirectoryTodoFile
+	}
+	if len(config.Files.ExcludeDirs) == 0 {
+		config.Files.ExcludeDirs = defaults.Files.ExcludeDirs
+	}
+
+	// Merge Sort section
+	if config.Sort.Field == "" {
+		config.Sort.Field = defaults.Sort.Field
+	}
+	if config.Sort.Direction == "" {
+		config.Sort.Direction = defaults.Sort.Direction
 	}
 
 	return config
@@ -364,4 +527,35 @@ func GetConfigFilePath() (string, error) {
 	}
 
 	return filepath.Join(tuiodoConfigDir, DefaultConfigFileName), nil
+}
+
+// GetCategoryStyle returns the style for a category
+func GetCategoryStyle(cfg Config, category string) lipgloss.Style {
+	style := lipgloss.NewStyle().
+		Italic(true).
+		Padding(0, 1)
+
+	if color, ok := cfg.Colors.CategoryColors[category]; ok {
+		style = style.Foreground(lipgloss.Color(color))
+	} else {
+		style = style.Foreground(lipgloss.Color(cfg.Colors.Secondary))
+	}
+
+	return style
+}
+
+// GetConfigPath returns the path to the config file
+func GetConfigPath() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "tuiodo.yaml"
+	}
+	return filepath.Join(homeDir, ".config", "tuiodo", "config.yaml")
+}
+
+// CreateDefaultConfig creates a default configuration file
+func CreateDefaultConfig() error {
+	path := GetConfigPath()
+	cfg := DefaultConfig()
+	return SaveConfig(cfg, path)
 }
