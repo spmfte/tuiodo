@@ -83,7 +83,30 @@
 - Go 1.24+ (or use the pre-built binaries)
 - A terminal with true color support recommended (iTerm2, Alacritty, Kitty, etc.)
 
-### Via Go Install (Recommended)
+### Via Homebrew (macOS)
+
+```bash
+# Install from the official tap
+brew tap spmfte/tuiodo
+brew install tuiodo
+```
+
+### Via AUR (Arch Linux)
+
+```bash
+# Using yay
+yay -S tuiodo
+
+# Using paru
+paru -S tuiodo
+
+# Manual installation from AUR
+git clone https://aur.archlinux.org/tuiodo.git
+cd tuiodo
+makepkg -si
+```
+
+### Via Go Install
 
 ```bash
 go install github.com/spmfte/tuiodo@latest
@@ -101,12 +124,6 @@ go build
 
 # Run it
 ./tuiodo
-```
-
-### Via Homebrew (Coming Soon)
-
-```bash
-brew install tuiodo
 ```
 
 ## 🎮 Quick Start
@@ -393,3 +410,33 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) - The amazing TUI framework
 - [Lip Gloss](https://github.com/charmbracelet/lipgloss) - Style definitions for terminal applications
 - [Charm](https://charm.sh/) - For their suite of beautiful terminal tools
+
+# Homebrew TUIODO
+
+This repository contains the Homebrew formula for [TUIODO](https://github.com/spmfte/tuiodo), a modern terminal task manager with extensive customization.
+
+## Installation
+
+```bash
+# Add the tap
+brew tap spmfte/tuiodo
+
+# Install TUIODO
+brew install tuiodo
+```
+
+## Development
+
+To update the formula:
+
+1. Update the version number in `tuiodo.rb`
+2. Update the SHA256 sum if needed
+3. Test the formula locally:
+   ```bash
+   brew install --build-from-source ./tuiodo.rb
+   ```
+4. Commit and push changes
+
+## License
+
+MIT License - see the [LICENSE](https://github.com/spmfte/tuiodo/blob/master/LICENSE) file for details.
