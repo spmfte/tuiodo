@@ -17,6 +17,17 @@ type CLIFlags struct {
 	StoragePath         string
 	TasksPerPage        int
 	ShowHelp            bool
+	ShowVersion         bool
+	Debug               bool
+	NoMouse             bool
+	NoColor             bool
+	BackupDir           string
+	MaxBackups          int
+	NoAutoSave          bool
+	NoBackup            bool
+	Category            string
+	Sort                string
+	View                string
 }
 
 // ParseFlags parses command-line flags
@@ -25,21 +36,49 @@ func ParseFlags() CLIFlags {
 
 	// Define command-line flags
 	flag.StringVar(&flags.ConfigFile, "config", "", "Path to config file")
+	flag.StringVar(&flags.ConfigFile, "c", "", "Path to config file (shorthand)")
+
 	flag.BoolVar(&flags.PrintConfig, "print-config", false, "Print current configuration and exit")
 	flag.BoolVar(&flags.CreateDefaultConfig, "create-default-config", false, "Create default configuration file and exit")
+
 	flag.StringVar(&flags.StoragePath, "storage", "", "Path to storage file (overrides config)")
+	flag.StringVar(&flags.StoragePath, "s", "", "Path to storage file (shorthand)")
+
 	flag.IntVar(&flags.TasksPerPage, "tasks-per-page", 0, "Number of tasks per page (overrides config)")
+	flag.IntVar(&flags.TasksPerPage, "t", 0, "Number of tasks per page (shorthand)")
+
 	flag.BoolVar(&flags.ShowHelp, "help", false, "Show help and exit")
+	flag.BoolVar(&flags.ShowHelp, "h", false, "Show help and exit (shorthand)")
+
+	flag.BoolVar(&flags.ShowVersion, "version", false, "Show version information")
+	flag.BoolVar(&flags.ShowVersion, "v", false, "Show version information (shorthand)")
+
+	flag.BoolVar(&flags.Debug, "debug", false, "Enable debug mode with detailed logging")
+	flag.BoolVar(&flags.NoMouse, "no-mouse", false, "Disable mouse support")
+	flag.BoolVar(&flags.NoColor, "no-color", false, "Disable color output")
+
+	flag.StringVar(&flags.BackupDir, "backup-dir", "", "Set backup directory (overrides config)")
+	flag.IntVar(&flags.MaxBackups, "max-backups", 5, "Set maximum number of backups (overrides config)")
+	flag.BoolVar(&flags.NoAutoSave, "no-auto-save", false, "Disable auto-save feature")
+	flag.BoolVar(&flags.NoBackup, "no-backup", false, "Disable backup on save")
+
+	flag.StringVar(&flags.Category, "category", "", "Start with specific category filter")
+	flag.StringVar(&flags.Sort, "sort", "", "Initial sort field (priority|created|category)")
+	flag.StringVar(&flags.View, "view", "", "Initial view (all|pending|completed)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of tuiodo:\n")
 		fmt.Fprintf(os.Stderr, "  tuiodo [options]\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nExample:\n")
+		fmt.Fprintf(os.Stderr, "\nExamples:\n")
 		fmt.Fprintf(os.Stderr, "  tuiodo --config ~/.config/tuiodo/my-config.yaml\n")
 		fmt.Fprintf(os.Stderr, "  tuiodo --create-default-config\n")
 		fmt.Fprintf(os.Stderr, "  tuiodo --storage ~/my-tasks.md\n")
+		fmt.Fprintf(os.Stderr, "  tuiodo --category Work\n")
+		fmt.Fprintf(os.Stderr, "  tuiodo --sort priority\n")
+		fmt.Fprintf(os.Stderr, "  tuiodo --view pending\n")
+		fmt.Fprintf(os.Stderr, "  tuiodo --no-mouse --no-color\n")
 	}
 
 	// Parse flags
@@ -112,6 +151,14 @@ func HandleConfigFlags(flags CLIFlags) (Config, bool) {
 
 	if flags.TasksPerPage > 0 {
 		config.General.TasksPerPage = flags.TasksPerPage
+	}
+
+	if flags.BackupDir != "" {
+		config.Storage.BackupDirectory = flags.BackupDir
+	}
+
+	if flags.MaxBackups > 0 {
+		config.Storage.MaxBackups = flags.MaxBackups
 	}
 
 	return config, false

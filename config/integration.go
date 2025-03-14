@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -201,6 +203,95 @@ func GetStyles(cfg Config) Styles {
 	return s
 }
 
+// GetMonochromeStyles returns styles without color for terminal compatibility
+func GetMonochromeStyles() Styles {
+	var s Styles
+
+	// Initialize styles with monochrome settings
+	s.Title = lipgloss.NewStyle().
+		Bold(true)
+
+	s.Subtitle = lipgloss.NewStyle()
+
+	s.StatusBar = lipgloss.NewStyle()
+
+	s.Footer = lipgloss.NewStyle().
+		Faint(true)
+
+	s.Accent = lipgloss.NewStyle().
+		Bold(true)
+
+	s.Warning = lipgloss.NewStyle().
+		Bold(true)
+
+	s.Error = lipgloss.NewStyle().
+		Bold(true).
+		Reverse(true)
+
+	// Container styles
+	s.Container = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder())
+
+	s.HeaderContainer = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderBottom(false)
+
+	s.TabContainer = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderTop(false).
+		BorderBottom(false)
+
+	s.TaskContainer = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderTop(false)
+
+	// Tab styles
+	s.Tab = lipgloss.NewStyle().
+		Padding(0, 1)
+
+	s.ActiveTab = lipgloss.NewStyle().
+		Padding(0, 1).
+		Bold(true)
+
+	// Task styles
+	s.Task = lipgloss.NewStyle()
+
+	s.SelectedTask = lipgloss.NewStyle().
+		Bold(true)
+
+	s.DoneTask = lipgloss.NewStyle().
+		Strikethrough(true).
+		Faint(true)
+
+	s.TaskText = lipgloss.NewStyle()
+
+	s.Checkbox = lipgloss.NewStyle()
+
+	s.CheckboxDone = lipgloss.NewStyle().
+		Bold(true)
+
+	s.Separator = lipgloss.NewStyle().
+		Faint(true)
+
+	// Priority indicators
+	s.PriorityHigh = lipgloss.NewStyle().
+		Bold(true)
+
+	s.PriorityMedium = lipgloss.NewStyle()
+
+	s.PriorityLow = lipgloss.NewStyle().
+		Faint(true)
+
+	// Input mode
+	s.InputField = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder())
+
+	s.InputPrompt = lipgloss.NewStyle().
+		Bold(true)
+
+	return s
+}
+
 // GetKeyBindings returns the mapped keybindings from config
 func GetKeyBindings(cfg Config) KeyBindings {
 	// This would convert the config's keybindings to whatever format
@@ -237,4 +328,29 @@ type KeyBindings struct {
 	MoveCursorUp   []string
 	MoveCursorDown []string
 	Help           []string
+}
+
+// ValidateFlags validates the provided flags
+func ValidateFlags(flags CLIFlags) error {
+	// Validate sort field
+	if flags.Sort != "" && flags.Sort != "priority" && flags.Sort != "created" && flags.Sort != "category" {
+		return fmt.Errorf("invalid sort field: %s (must be priority, created, or category)", flags.Sort)
+	}
+
+	// Validate view type
+	if flags.View != "" && flags.View != "all" && flags.View != "pending" && flags.View != "completed" {
+		return fmt.Errorf("invalid view type: %s (must be all, pending, or completed)", flags.View)
+	}
+
+	// Validate tasks per page
+	if flags.TasksPerPage < 0 {
+		return fmt.Errorf("tasks per page must be >= 0")
+	}
+
+	// Validate max backups
+	if flags.MaxBackups < 0 {
+		return fmt.Errorf("max backups must be >= 0")
+	}
+
+	return nil
 }

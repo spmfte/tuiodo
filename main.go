@@ -16,7 +16,7 @@ import (
 
 // Version information
 var (
-	Version   = "1.0.0"
+	Version   = "1.1.0"
 	BuildTime = "unknown"
 	GitCommit = "unknown"
 )
@@ -44,7 +44,71 @@ func (a App) View() string {
 	return ui.View(a.model)
 }
 
+// printVersion prints version information
+func printVersion() {
+	fmt.Printf("TUIODO v%s\n", Version)
+	fmt.Printf("Build Time: %s\n", BuildTime)
+	fmt.Printf("Git Commit: %s\n", GitCommit)
+	fmt.Printf("Go Version: %s\n", runtime.Version())
+	fmt.Printf("OS/Arch: %s/%s\n", runtime.GOOS, runtime.GOARCH)
+}
+
+// printUsage prints the help message
+func printUsage() {
+	fmt.Printf(`TUIODO - A Modern Terminal Task Manager v%s
+
+Usage:
+  tuiodo [options]
+
+Options:
+  -h, --help                    Show this help message
+  -v, --version                 Show version information
+  -c, --config <path>          Path to config file
+  --create-default-config       Create default configuration file and exit
+  --print-config               Print current configuration and exit
+  -s, --storage <path>         Path to storage file (overrides config)
+  -t, --tasks-per-page <num>   Number of tasks per page (overrides config)
+  --debug                      Enable debug mode with detailed logging
+  --no-mouse                   Disable mouse support
+  --no-color                   Disable color output
+  --backup-dir <path>          Set backup directory (overrides config)
+  --max-backups <num>          Set maximum number of backups (overrides config)
+  --no-auto-save              Disable auto-save feature
+  --no-backup                  Disable backup on save
+  --category <name>            Start with specific category filter
+  --sort <field>              Initial sort field (priority|created|category)
+  --view <type>               Initial view (all|pending|completed)
+
+Examples:
+  tuiodo                                    # Start with default settings
+  tuiodo --config ~/.config/tuiodo.yaml     # Use custom config file
+  tuiodo --storage ~/tasks.md               # Use specific storage file
+  tuiodo --category Work                    # Start with Work category filter
+  tuiodo --sort priority                    # Sort tasks by priority
+  tuiodo --view pending                     # Show only pending tasks
+  tuiodo --no-mouse --no-color             # Terminal-friendly mode
+
+For more information and documentation:
+  https://github.com/spmfte/tuiodo
+`, Version)
+}
+
 func main() {
+	// Parse command line flags
+	flags := config.ParseFlags()
+
+	// Handle version flag
+	if flags.ShowVersion {
+		printVersion()
+		return
+	}
+
+	// Handle help flag
+	if flags.ShowHelp {
+		printUsage()
+		return
+	}
+
 	// Get version info if built with -ldflags
 	if buildInfo, ok := debug.ReadBuildInfo(); ok && GitCommit == "unknown" {
 		for _, setting := range buildInfo.Settings {
@@ -56,53 +120,52 @@ func main() {
 		}
 	}
 
-	// Parse command line flags
-	flags := config.ParseFlags()
+	// Validate flags
+	if err := config.ValidateFlags(flags); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 
-	// Handle config-related flags (like --help, --create-default-config)
+	// Handle config-related flags
 	cfg, shouldExit := config.HandleConfigFlags(flags)
 	if shouldExit {
 		return
 	}
 
 	// Initialize default config file if it doesn't exist
-	// This is silent and won't overwrite existing config
 	if err := config.InitConfigIfNeeded(); err != nil {
 		fmt.Printf("Warning: Could not initialize config: %v\n", err)
 	}
 
-	// Set up storage path from config
+	// Set up storage path from config or flags
 	var storagePath string
 	if flags.StoragePath != "" {
-		// CLI flag overrides config
 		storagePath = flags.StoragePath
 	} else {
-		// Otherwise use config value
 		storagePath = cfg.Storage.FilePath
-
-		// Expand ~ in path if needed
-		expandedPath, err := config.ExpandPath(storagePath)
-		if err == nil {
-			storagePath = expandedPath
+		if expanded, err := config.ExpandPath(storagePath); err == nil {
+			storagePath = expanded
 		}
 	}
 
-	// Expand backup directory path if needed
+	// Handle backup directory configuration
 	backupDir := cfg.Storage.BackupDirectory
+	if flags.BackupDir != "" {
+		backupDir = flags.BackupDir
+	}
 	if backupDir != "" {
-		expandedBackupDir, err := config.ExpandPath(backupDir)
-		if err == nil {
-			backupDir = expandedBackupDir
+		if expanded, err := config.ExpandPath(backupDir); err == nil {
+			backupDir = expanded
 		}
 	}
 
-	// Initialize storage with full config
+	// Initialize storage with full configuration
 	storage.Initialize(
 		storagePath,
 		backupDir,
-		cfg.Storage.MaxBackups,
-		cfg.Storage.AutoSave,
-		cfg.Storage.BackupOnSave,
+		flags.MaxBackups,
+		!flags.NoAutoSave,
+		!flags.NoBackup,
 	)
 
 	// Load tasks from storage
@@ -110,6 +173,9 @@ func main() {
 
 	// Update UI styles based on configuration
 	styles := config.GetStyles(cfg)
+	if flags.NoColor {
+		styles = config.GetMonochromeStyles()
+	}
 	ui.UpdateStyles(styles)
 
 	// Get key bindings from config
@@ -121,23 +187,41 @@ func main() {
 	// Create initial model with configuration
 	initialModel := model.NewModelWithConfig(
 		tasks,
-		cfg.General.TasksPerPage,
-		cfg.General.DefaultCategory,
+		flags.TasksPerPage,
+		flags.Category,
 		keyBindings,
 	)
+
+	// Apply initial view and sort if specified
+	if flags.View != "" {
+		switch flags.View {
+		case "all":
+			initialModel.CurrentView = model.TabAll
+		case "pending":
+			initialModel.CurrentView = model.TabPending
+		case "completed":
+			initialModel.CurrentView = model.TabCompleted
+		}
+	}
+	if flags.Sort != "" {
+		initialModel.SortTasks(model.SortType(flags.Sort))
+	}
+
+	// Configure tea program options
+	options := []tea.ProgramOption{}
+
+	// Add alt screen by default
+	options = append(options, tea.WithAltScreen())
+
+	// Add mouse support if enabled and on suitable platform
+	if !flags.NoMouse && runtime.GOOS != "windows" {
+		options = append(options, tea.WithMouseCellMotion())
+	}
 
 	// Create application instance
 	app := App{
 		model: initialModel,
 		cfg:   cfg,
-	}
-
-	// Configure tea program options
-	options := []tea.ProgramOption{tea.WithAltScreen()}
-
-	// Add mouse support if on a suitable platform
-	if runtime.GOOS != "windows" {
-		options = append(options, tea.WithMouseCellMotion())
 	}
 
 	// Create and run the program
