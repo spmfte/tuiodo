@@ -93,6 +93,8 @@ brew install tuiodo
 
 ### Via AUR (Arch Linux)
 
+> NOTE: Work in progress.
+
 ```bash
 # Using yay
 yay -S tuiodo
