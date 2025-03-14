@@ -26,16 +26,15 @@
 
 ### 📋 Task Management
 
-- **Priority Levels** (High/Medium/Low) with color coding
-- **Category Organization** for grouping related tasks
-- **Due Dates** with optional date formatting
-- **Smart Filtering** by status, category, priority, or due date
+- **Priority Levels** (Critical/High/Medium/Low) with color coding
+- **Dynamic Category Organization** with configurable colors
+- **Smart Filtering** by status, category, and priority
 - **Powerful Search** with instant results as you type
 - **Task Dependencies** to create linked task workflows (coming soon)
 
 ### 📝 Content & Storage
 
-- **Markdown Storage** in simple, human-readable format
+- **Markdown Storage** in simple, human-readable format (`~/TODO.md` by default)
 - **Automatic Backups** with configurable options
 - **Git Integration** for versioning your task list (coming soon)
 - **Multi-device Sync** via configurable storage paths (share tasks via Dropbox, etc.)
@@ -242,52 +241,27 @@ ui:
   header_format: "TUIODO" # Header text
   show_categories: true # Show category labels
   show_priorities: true # Show priority indicators
-  show_due_dates: true # Show due dates
   task_separator: "─" # Character used to separate tasks
   enable_tabs: true # Show tab bar
   enable_borders: true # Show container borders
   border_style: "rounded" # Border style (rounded, normal, double, thick, none)
-  date_format: "2006-01-02" # Go date format
-  cursor_indicator: "→ " # Cursor symbol
-  checkbox_done: "[✓]" # Completed task checkbox
-  checkbox_pending: "[ ]" # Pending task checkbox
+  date_format: "2006-01-02" # Go date format for creation dates
 ```
 
-#### 3. Color Settings
+#### 3. Colors Settings
 
 ```yaml
 colors:
-  color_mode: "auto" # Color mode (auto, true_color, 256, 16, none)
-  theme: "default" # Color theme (default, dark, light, custom)
-  primary: "#7C3AED" # Primary color (purple)
-  secondary: "#2563EB" # Secondary color (blue)
-  tertiary: "#10B981" # Tertiary color (green)
-  success: "#10B981" # Success color (green)
-  warning: "#F59E0B" # Warning color (amber)
-  error: "#EF4444" # Error color (red)
-  text: "#F9FAFB" # Main text color
-  text_dim: "#E5E7EB" # Dimmed text
-  text_muted: "#9CA3AF" # Muted text
-  highlight: "#C4B5FD" # Highlight color
-  border: "#4B5563" # Border color
-  border_focus: "#8B5CF6" # Focused border color
-  subtle: "#374151" # Subtle color
-
-  # Task priorities
-  priority_high: "#EF4444" # High priority (red)
-  priority_medium: "#F59E0B" # Medium priority (amber)
-  priority_low: "#10B981" # Low priority (green)
-
-  # Task status
-  task_done: "#9CA3AF" # Completed task color
-  task_pending: "#F9FAFB" # Pending task color
-
-  # Custom category colors
-  category_colors:
-    Work: "#3B82F6" # Blue
-    Personal: "#EC4899" # Pink
-    Health: "#10B981" # Green
-    Finance: "#6366F1" # Indigo
+  categories:
+    Work: "#ff0000"      # Red
+    Personal: "#00ff00"  # Green
+    Health: "#0000ff"    # Blue
+    Finance: "#ffff00"   # Yellow
+  priorities:
+    Critical: "#ff0000"  # Red
+    High: "#ff7f00"      # Orange
+    Medium: "#ffff00"    # Yellow
+    Low: "#00ff00"       # Green
 ```
 
 #### 4. Key Bindings
