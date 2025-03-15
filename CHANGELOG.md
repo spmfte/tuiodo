@@ -5,6 +5,25 @@ All notable changes to TUIODO will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-03-15
+
+### Added
+- Enhanced task expansion UI with improved formatting
+- Advanced metadata tag support (@due, @tag, @status)
+- Color-coded progress bar in status line
+- Invisible attribution tag at the bottom of todo files
+
+### Changed
+- Updated cursor navigation to circular/wrap-around mode
+- Improved task completion toggle (spacebar) functionality
+- Enhanced delete confirmation with two-step process
+- Improved task restoration through undo capability
+
+### Fixed
+- Fixed UI formatting issues in expanded task view
+- Fixed space bar key handling for task completion
+- Fixed task comparison for the Metadata map field
+
 ## [1.1.0] - 2025-03-14
 
 ### Added
