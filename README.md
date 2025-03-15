@@ -148,6 +148,18 @@ go build
 ### Basic Usage
 
 Just run `tuiodo` to start the application. Use the keyboard shortcuts to navigate and manage your tasks.
+It is recommended to use the following alias:
+```bash
+echo "alias todo='tuiodo'" >> "$HOME/.$(which "$SHELL" | awk -F'/' '{print $NF}')rc"
+```
+
+#### What this command does:
+1. `which "$SHELL"` retrieves the full path of the current shell (e.g., `/bin/zsh` or `/bin/bash`).
+2. `awk -F'/' '{print $NF}'` extracts only the last part of the path, which is the shell name (e.g., `zsh` or `bash`).
+3. `"$HOME/.$(which "$SHELL" | awk -F'/' '{print $NF}')rc"` constructs the appropriate shell configuration file path (`~/.zshrc`, `~/.bashrc`, etc.).
+4. `echo "alias todo='tuiodo'" >> "$HOME/.$(which "$SHELL" | awk -F'/' '{print $NF}')rc"` appends the alias to the correct shell config file.
+5. After running this command, reload your shell configuration with `source ~/.zshrc` (or `source ~/.bashrc`) to apply the alias.
+6. You can now run `todo` instead of `tuiodo` to start the application.
 
 ### Creating Tasks
 
