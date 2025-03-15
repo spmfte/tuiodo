@@ -32,12 +32,25 @@ TUIODO is a feature-rich, terminal-based task management application built with 
 - **Priority Levels** (Critical/High/Medium/Low) with color coding
 - **Dynamic Category Organization** with configurable colors
 - **Smart Filtering** by status, category, and priority
-- **Powerful Search** with instant results as you type
-- **Task Dependencies** to create linked task workflows (coming soon)
+- **Task Expansion** to view full details of any task
+- **Circular Navigation** with wrap-around cursor movement
+- **Delete Confirmation** with undo capability
+- **Rich Metadata Support** using @tag notation
+- **Markdown Storage** in simple, human-readable format (`~/TODO.md` by default)
+- **Automatic Backups** with configurable options
+
+### 📝 Metadata Tags Support
+
+TUIODO supports several metadata tags for enhanced task tracking:
+
+- **@priority** - Set task importance (critical/high/medium/low)
+- **@created** - Automatically tracked creation timestamp
+- **@due** - Set deadlines with YYYY-MM-DD format 
+- **@tag** - Add custom tags to group related tasks
+- **@status** - Track custom status values
 
 ### 📝 Content & Storage
 
-- **Markdown Storage** in simple, human-readable format (`~/TODO.md` by default)
 - **Automatic Backups** with configurable options
 - **Git Integration** for versioning your task list (coming soon)
 - **Multi-device Sync** via configurable storage paths (share tasks via Dropbox, etc.)
@@ -132,28 +145,15 @@ go build
 
 ## 🎮 Quick Start
 
-### Command-line Options
+### Basic Usage
 
-```bash
-Options:
-  -h, --help                    Show this help message
-  -v, --version                 Show version information
-  -c, --config <path>          Path to config file
-  --create-default-config       Create default configuration file and exit
-  --print-config               Print current configuration and exit
-  -s, --storage <path>         Path to storage file (overrides config)
-  -t, --tasks-per-page <num>   Number of tasks per page (overrides config)
-  --debug                      Enable debug mode with detailed logging
-  --no-mouse                   Disable mouse support
-  --no-color                   Disable color output
-  --backup-dir <path>          Set backup directory (overrides config)
-  --max-backups <num>          Set maximum number of backups (overrides config)
-  --no-auto-save              Disable auto-save feature
-  --no-backup                  Disable backup on save
-  --category <name>            Start with specific category filter
-  --sort <field>              Initial sort field (priority|created|category)
-  --view <type>               Initial view (all|pending|completed)
-```
+Just run `tuiodo` to start the application. Use the keyboard shortcuts to navigate and manage your tasks.
+
+### Creating Tasks
+
+Press <kbd>a</kbd> to add a new task. You can organize tasks by category using the format:
+
+"Category: Task description"
 
 For example:
 
@@ -163,9 +163,16 @@ For example:
 
 ### Adding Priorities
 
-Use the `p` key to cycle through priority levels for the selected task:
+Use the <kbd>p</kbd> key to cycle through priority levels for the selected task:
 
-- `None → Low → Medium → High → None`
+- `None → Low → Medium → High → Critical → None`
+
+### Adding Metadata
+
+Add metadata to tasks using @ notation:
+- `@due:2023-12-31` - Sets a due date
+- `@tag:important` - Adds a custom tag
+- `@status:in-progress` - Sets a custom status
 
 ### Command-line Options
 
@@ -205,11 +212,17 @@ tuiodo --category Work --view pending
 | **Task Management** |                                        |
 | Add task            | <kbd>a</kbd>                           |
 | Edit task           | <kbd>e</kbd>                           |
-| Delete task         | <kbd>d</kbd>                           |
+| Delete task         | <kbd>d</kbd> (press twice to confirm)  |
+| Undo delete         | <kbd>u</kbd>                           |
 | Toggle completion   | <kbd>space</kbd> <kbd>enter</kbd>      |
+| Expand task details | <kbd>x</kbd>                           |
 | Cycle priority      | <kbd>p</kbd>                           |
 | **Filtering**       |                                        |
 | Cycle categories    | <kbd>c</kbd>                           |
+| Sort by priority    | <kbd>s</kbd>                           |
+| Sort by date        | <kbd>S</kbd>                           |
+| Sort by category    | <kbd>C</kbd>                           |
+| **Other**           |                                        |
 | Show/hide help      | <kbd>?</kbd> <kbd>F1</kbd>             |
 | Quit                | <kbd>q</kbd> <kbd>Ctrl+c</kbd>         |
 

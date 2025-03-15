@@ -251,6 +251,12 @@ func CreateStyles(colors Colors) map[string]lipgloss.Style {
 			Strikethrough(true).
 			Foreground(colors.TextMuted),
 
+		// Task expanded view
+		"taskExpanded": lipgloss.NewStyle().
+			Foreground(colors.Text).
+			Background(colors.Subtle).
+			Padding(0, 2),
+
 		// Due date
 		"dueDate": lipgloss.NewStyle().
 			Foreground(colors.TextMuted).

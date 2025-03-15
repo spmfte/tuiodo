@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -25,11 +26,22 @@ func handleKeypress(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 	// If help is visible, only respond to help toggle or quit
 	if m.HelpVisible {
 		switch msg.String() {
-		case "?", "h", "escape":
+		case "?", "h", "escape", "esc", "q":
 			m.HelpVisible = false
-		case "q", "ctrl+c":
+			return m, nil
+		case "ctrl+c":
 			return m, tea.Quit
+		default:
+			// Allow any key to dismiss help
+			m.HelpVisible = false
+			return m, nil
 		}
+	}
+
+	// If delete confirmation is active, any key other than 'd' cancels it
+	if m.DeleteConfirm && msg.String() != "d" {
+		m.DeleteConfirm = false
+		m.SetStatus("Deletion cancelled")
 		return m, nil
 	}
 
@@ -73,24 +85,58 @@ func handleKeypress(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 	case "d": // Delete task
 		filteredTasks := m.GetVisibleTasks()
 		if len(filteredTasks) > 0 {
-			m.DeleteCurrentTask()
-			storage.SaveTasks(m.Tasks)
-			m.SetStatus("Task deleted")
+			if m.DeleteConfirm {
+				// If already in confirmation mode, execute the delete
+				m.DeleteCurrentTask()
+				storage.SaveTasks(m.Tasks)
+				m.SetStatus("Task deleted (press 'u' to undo)")
+				m.DeleteConfirm = false
 
-			// Recalculate pagination after deleting a task
-			m.RecalculatePagination()
+				// Recalculate pagination after deleting a task
+				m.RecalculatePagination()
+			} else {
+				// First press just enters confirmation mode
+				m.DeleteConfirm = true
+				m.SetStatus("Press 'd' again to confirm deletion, or any other key to cancel")
+			}
 		}
-	case "enter", "space": // Toggle task completion
+	case "enter", " ", "space": // Toggle task completion - added explicit " " and "space" matches
 		filteredTasks := m.GetVisibleTasks()
 		if len(filteredTasks) > 0 && m.Cursor < len(filteredTasks) {
-			m.ToggleCurrentTask()
-			storage.SaveTasks(m.Tasks)
+			// Get the actual task from the filtered list
+			taskToToggle := filteredTasks[m.Cursor]
 
-			// Show status message
-			if filteredTasks[m.Cursor].Done {
-				m.SetStatus("Task marked as complete")
-			} else {
-				m.SetStatus("Task marked as incomplete")
+			// Find the task's index in the main task list by comparing relevant fields
+			found := false
+			for i, task := range m.Tasks {
+				// Compare only the essential fields that identify a task
+				// Added more robust comparison that doesn't rely as heavily on CreatedAt
+				sameDescription := task.Description == taskToToggle.Description
+				sameCategory := task.Category == taskToToggle.Category
+				sameCreationTime := task.CreatedAt.Equal(taskToToggle.CreatedAt)
+
+				// Use multiple matching criteria for more robust identification
+				if sameDescription && sameCategory && sameCreationTime {
+					// Toggle completion status
+					m.Tasks[i].Done = !m.Tasks[i].Done
+					storage.SaveTasks(m.Tasks)
+
+					// Show status message
+					if m.Tasks[i].Done {
+						m.SetStatus("Task marked as complete")
+					} else {
+						m.SetStatus("Task marked as incomplete")
+					}
+					found = true
+					break
+				}
+			}
+
+			// If task wasn't found in main list, log an error status
+			if !found {
+				m.SetStatus("Error: Could not find task to toggle")
+				// Log more details for debugging
+				log.Printf("Failed to toggle task: %+v", taskToToggle)
 			}
 		}
 	case "c": // Cycle through categories for filtering
@@ -128,6 +174,25 @@ func handleKeypress(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 	case "C": // Sort by category
 		m.SortTasks(model.SortByCategory)
 		m.SetStatus("Sorted by category")
+	case "x": // Expand/collapse task details
+		filteredTasks := m.GetVisibleTasks()
+		if len(filteredTasks) > 0 && m.Cursor < len(filteredTasks) {
+			if m.TaskExpanded && m.ExpandedTaskIdx == m.Cursor {
+				// Collapse if already expanded
+				m.TaskExpanded = false
+			} else {
+				// Expand the task
+				m.TaskExpanded = true
+				m.ExpandedTaskIdx = m.Cursor
+			}
+		}
+	case "u": // Undo last delete
+		if m.LastDeleted != nil {
+			if m.UndoDelete() {
+				storage.SaveTasks(m.Tasks)
+				m.SetStatus("Task restored")
+			}
+		}
 	}
 
 	return m, nil

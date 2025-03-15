@@ -22,7 +22,8 @@ type Task struct {
 	Done        bool
 	Category    string
 	Priority    Priority
-	CreatedAt   time.Time // When the task was created
+	CreatedAt   time.Time         // When the task was created
+	Metadata    map[string]string // Additional metadata like due dates, tags, status
 }
 
 // TabView represents the current view/filter mode
@@ -63,6 +64,11 @@ type Model struct {
 	EditingTask     bool   // Whether currently editing a task
 	EditingTaskIdx  int    // Index of task being edited
 	HelpVisible     bool   // Whether help is visible
+	TaskExpanded    bool   // Whether task details are expanded
+	ExpandedTaskIdx int    // Index of task being expanded
+	DeleteConfirm   bool   // Whether delete confirmation is active
+	LastDeleted     *Task  // Last deleted task for undo
+	LastDeletedIdx  int    // Index where the task was deleted
 }
 
 // Pagination tracks position in a paginated list
@@ -312,16 +318,72 @@ func (m *Model) UpdateTask(index int, description, category string, priority Pri
 	m.Tasks[index].Priority = priority
 }
 
-// DeleteCurrentTask removes the task at the current cursor position
+// DeleteCurrentTask deletes the task at the current cursor position
 func (m *Model) DeleteCurrentTask() {
-	if len(m.Tasks) == 0 || m.Cursor >= len(m.Tasks) {
+	filteredTasks := m.GetVisibleTasks()
+	if len(filteredTasks) == 0 || m.Cursor >= len(filteredTasks) {
 		return
 	}
 
-	m.Tasks = append(m.Tasks[:m.Cursor], m.Tasks[m.Cursor+1:]...)
-	if m.Cursor >= len(m.Tasks) && m.Cursor > 0 {
+	// Find the actual index in the Tasks slice
+	taskToDelete := filteredTasks[m.Cursor]
+	var taskIdx int
+	found := false
+
+	for i, task := range m.Tasks {
+		if task.Description == taskToDelete.Description &&
+			task.Category == taskToDelete.Category &&
+			task.CreatedAt == taskToDelete.CreatedAt {
+			taskIdx = i
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return // Task not found in the main list
+	}
+
+	// Store the deleted task for potential undo
+	deletedTask := m.Tasks[taskIdx]
+	m.LastDeleted = &deletedTask
+	m.LastDeletedIdx = taskIdx
+
+	// Remove the task
+	m.Tasks = append(m.Tasks[:taskIdx], m.Tasks[taskIdx+1:]...)
+
+	// Update cursor if needed
+	if m.Cursor >= len(filteredTasks)-1 && m.Cursor > 0 {
 		m.Cursor--
 	}
+}
+
+// UndoDelete restores the last deleted task
+func (m *Model) UndoDelete() bool {
+	if m.LastDeleted == nil {
+		return false
+	}
+
+	// Calculate insertion point (either the original position or end of list)
+	insertIdx := m.LastDeletedIdx
+	if insertIdx > len(m.Tasks) {
+		insertIdx = len(m.Tasks)
+	}
+
+	// Insert task back into original position
+	if insertIdx == len(m.Tasks) {
+		m.Tasks = append(m.Tasks, *m.LastDeleted)
+	} else {
+		// Create space and insert the task
+		m.Tasks = append(m.Tasks, Task{})                // Add empty task at end
+		copy(m.Tasks[insertIdx+1:], m.Tasks[insertIdx:]) // Shift tasks right
+		m.Tasks[insertIdx] = *m.LastDeleted              // Insert task
+	}
+
+	// Clean up
+	m.LastDeleted = nil
+	m.RecalculatePagination()
+	return true
 }
 
 // ToggleCurrentTask toggles the completion status of the current task
@@ -354,28 +416,32 @@ func (m *Model) PrevPage() {
 	}
 }
 
-// MoveCursorUp moves the cursor up one position if possible
+// MoveCursorUp moves the cursor up one position, or wraps to the bottom if at the top
 func (m *Model) MoveCursorUp() {
+	visibleTasks := m.GetVisibleTasks()
+	if len(visibleTasks) == 0 {
+		return
+	}
+
 	if m.Cursor > 0 {
 		m.Cursor--
-	} else if m.Pagination.Page > 0 {
-		// If at the top of the page, go to previous page
-		m.PrevPage()
-		visibleTasks := m.GetVisibleTasks()
-		if len(visibleTasks) > 0 {
-			m.Cursor = len(visibleTasks) - 1
-		}
+	} else {
+		// If at the top, wrap to the bottom
+		m.Cursor = len(visibleTasks) - 1
 	}
 }
 
-// MoveCursorDown moves the cursor down one position if possible
+// MoveCursorDown moves the cursor down one position, or wraps to the top if at the bottom
 func (m *Model) MoveCursorDown() {
 	visibleTasks := m.GetVisibleTasks()
-	if len(visibleTasks) > 0 && m.Cursor < len(visibleTasks)-1 {
+	if len(visibleTasks) == 0 {
+		return
+	}
+
+	if m.Cursor < len(visibleTasks)-1 {
 		m.Cursor++
-	} else if m.Pagination.Page < m.Pagination.TotalPages-1 {
-		// If at the bottom of the page, go to next page
-		m.NextPage()
+	} else {
+		// If at the bottom, wrap to the top
 		m.Cursor = 0
 	}
 }

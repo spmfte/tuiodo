@@ -38,6 +38,9 @@ var (
 var (
 	priorityPattern  = regexp.MustCompile(`@priority:(high|medium|low|critical)`)
 	createdAtPattern = regexp.MustCompile(`@created:(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)`)
+	duePattern       = regexp.MustCompile(`@due:(\d{4}-\d{2}-\d{2})`)
+	tagPattern       = regexp.MustCompile(`@tag:([^\s@]+)`)
+	statusPattern    = regexp.MustCompile(`@status:([^\s@]+)`)
 )
 
 // Initialize sets up the storage with configurable settings
@@ -143,13 +146,57 @@ func LoadTasks() []model.Task {
 				description = strings.TrimSpace(createdAtPattern.ReplaceAllString(description, ""))
 			}
 
-			tasks = append(tasks, model.Task{
+			// Extract due date if present
+			var dueDate string
+			dueMatch := duePattern.FindStringSubmatch(description)
+			if len(dueMatch) > 1 {
+				dueDate = dueMatch[1]
+				// Keep the due date in the metadata but remove it from visible description
+				description = strings.TrimSpace(duePattern.ReplaceAllString(description, ""))
+			}
+
+			// Extract tags if present
+			var tags []string
+			tagMatches := tagPattern.FindAllStringSubmatch(description, -1)
+			for _, match := range tagMatches {
+				if len(match) > 1 {
+					tags = append(tags, match[1])
+				}
+			}
+			// Remove the tag markers from visible description
+			description = strings.TrimSpace(tagPattern.ReplaceAllString(description, ""))
+
+			// Extract status if present
+			var status string
+			statusMatch := statusPattern.FindStringSubmatch(description)
+			if len(statusMatch) > 1 {
+				status = statusMatch[1]
+				// Remove the status tag from visible description
+				description = strings.TrimSpace(statusPattern.ReplaceAllString(description, ""))
+			}
+
+			// Create task object with all metadata
+			task := model.Task{
 				Description: description,
 				Done:        isDone,
 				Category:    currentCategory,
 				Priority:    priority,
 				CreatedAt:   createdAt,
-			})
+				Metadata:    make(map[string]string),
+			}
+
+			// Store additional metadata
+			if dueDate != "" {
+				task.Metadata["due"] = dueDate
+			}
+			if len(tags) > 0 {
+				task.Metadata["tags"] = strings.Join(tags, ",")
+			}
+			if status != "" {
+				task.Metadata["status"] = status
+			}
+
+			tasks = append(tasks, task)
 		}
 	}
 
@@ -203,10 +250,27 @@ func SaveTasks(tasks []model.Task) error {
 			// Add creation date
 			description = fmt.Sprintf("%s @created:%s", description, task.CreatedAt.UTC().Format(time.RFC3339))
 
+			// Add additional metadata if present
+			if dueDate, ok := task.Metadata["due"]; ok {
+				description = fmt.Sprintf("%s @due:%s", description, dueDate)
+			}
+			if tags, ok := task.Metadata["tags"]; ok {
+				for _, tag := range strings.Split(tags, ",") {
+					description = fmt.Sprintf("%s @tag:%s", description, tag)
+				}
+			}
+			if status, ok := task.Metadata["status"]; ok {
+				description = fmt.Sprintf("%s @status:%s", description, status)
+			}
+
 			content.WriteString(fmt.Sprintf("- [%s] %s\n", checkmark, description))
 		}
 		content.WriteString("\n")
 	}
+
+	// Add an invisible tag at the bottom for the tuiodo app
+	// This tag doesn't appear in the TUI but will be visible in raw markdown files
+	content.WriteString("\n<!-- Optimized for [tuiodo](https://github.com/spmfte/tuiodo) -->\n")
 
 	// Ensure the directory exists
 	dir := filepath.Dir(todoFilePath)

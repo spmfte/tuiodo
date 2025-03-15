@@ -2,11 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spmfte/tuiodo/model"
+	"github.com/spmfte/tuiodo/storage"
 )
 
 // View renders the application
@@ -170,11 +172,35 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 
 	var taskList []string
 
-	// Create header row with fixed widths
-	taskList = append(taskList, styles["taskHeader"].Render(fmt.Sprintf("%-3s %-40s %-15s %s", "", "TASK", "CATEGORY", "CREATED")))
+	// Create header row with improved dynamic layout
+	// Calculate widths based on screen size with fixed proportions
+	spacing := 2 // Fixed spacing between columns
+	minTitleWidth := 12
+	minCategoryWidth := 10
+	minDateWidth := 10
 
-	// Calculate available width for task description
-	maxDescWidth := 40 // Fixed width for task description
+	// Reserve space for cursor, checkbox, priority indicators, etc.
+	reservedWidth := 12
+
+	// Available width for main columns
+	contentWidth := width - reservedWidth - 6 // Account for borders and padding
+
+	// Set column widths as proportions of available space
+	// with minimums to maintain readability
+	dateWidth := minDateWidth
+	categoryWidth := max(minCategoryWidth, contentWidth*20/100)                       // 20% for category
+	taskWidth := max(minTitleWidth, contentWidth-categoryWidth-dateWidth-(spacing*2)) // Remaining space for task
+
+	// Create the header with proper spacing - we don't need headerFormat anymore
+	taskHeader := styles["taskHeader"].Copy().
+		MarginLeft(3).
+		Bold(true).
+		Render(fmt.Sprintf("TASK%s%s%sCREATED",
+			strings.Repeat(" ", taskWidth-4),
+			"CATEGORY",
+			strings.Repeat(" ", categoryWidth+spacing-8)))
+
+	taskList = append(taskList, taskHeader)
 
 	// Render each task
 	for i, task := range visibleTasks {
@@ -201,6 +227,7 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 		taskRow.WriteString(" ")
 
 		// Priority indicator if set
+		prioritySpace := 0
 		if task.Priority != "" {
 			var priorityStyle lipgloss.Style
 			switch task.Priority {
@@ -213,28 +240,48 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 			case model.PriorityLow:
 				priorityStyle = styles["priorityLow"]
 			}
-			taskRow.WriteString(priorityStyle.Render(string(task.Priority)))
+			// Adjust space for the priority tag
+			priorityText := string(task.Priority)
+			priorityColored := priorityStyle.Render(priorityText)
+			prioritySpace = lipgloss.Width(priorityColored) + 1
+			taskRow.WriteString(priorityColored)
 			taskRow.WriteString(" ")
 		}
 
-		// Task description with fixed width
+		// Calculate adjusted task width considering priority
+		adjustedTaskWidth := taskWidth - prioritySpace
+
+		// Task description
 		taskStyle := styles["taskPending"]
 		if task.Done {
 			taskStyle = styles["taskDone"]
 		}
 
-		// Clean description (remove metadata)
+		// Clean description and truncate if needed
 		description := cleanMetadata(task.Description)
-		if len(description) > maxDescWidth {
-			description = description[:maxDescWidth-3] + "..."
-		} else {
-			description = fmt.Sprintf("%-40s", description) // Pad to fixed width
+
+		// Calculate category length for potential truncation
+		categoryStrLen := len(task.Category)
+		extraCategoryLen := max(0, categoryStrLen-int(categoryWidth))
+
+		// If category is longer than its allocated space, take space from task
+		adjustedTaskWidth = max(minTitleWidth, adjustedTaskWidth-extraCategoryLen)
+
+		if len(description) > adjustedTaskWidth {
+			description = description[:adjustedTaskWidth-3] + "..."
 		}
 
-		taskRow.WriteString(taskStyle.Render(description))
+		// Pad the description to its adjusted width
+		paddedDesc := fmt.Sprintf("%-*s", adjustedTaskWidth, description)
+		taskRow.WriteString(taskStyle.Render(paddedDesc))
 
-		// Category with fixed width
-		categoryStr := fmt.Sprintf("%-15s", task.Category) // Pad category to fixed width
+		// Category with appropriate width
+		category := task.Category
+		if len(category) > int(categoryWidth) {
+			category = category[:categoryWidth-3] + "..."
+		}
+
+		categoryStr := fmt.Sprintf("%-*s", categoryWidth, category)
 		if task.Category != "" {
 			categoryStyle := styles["category"]
 			if colorStyle, ok := styles["category_"+strings.ToLower(task.Category)]; ok {
@@ -242,14 +289,85 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 			}
 			taskRow.WriteString(categoryStyle.Render(categoryStr))
 		} else {
-			taskRow.WriteString(strings.Repeat(" ", 15)) // Empty space for alignment
+			taskRow.WriteString(strings.Repeat(" ", int(categoryWidth)))
 		}
+
+		// Add spacing between category and date
+		taskRow.WriteString(strings.Repeat(" ", spacing))
 
 		// Creation date (local time, date only)
 		createdDate := task.CreatedAt.Local().Format("2006-01-02")
 		taskRow.WriteString(styles["date"].Render(createdDate))
 
 		taskList = append(taskList, taskRow.String())
+
+		// If this task is expanded, show its full details
+		if m.TaskExpanded && i == m.ExpandedTaskIdx {
+			// Create a cleaner expanded view without blocks or borders
+			expandedDetails := []string{
+				"",
+				styles["secondary"].Copy().Bold(true).Render("Full Description:"),
+				styles["taskPending"].Copy().Render("  " + cleanMetadata(task.Description)),
+				"",
+			}
+
+			// Add metadata in a cleaner format
+			metaInfo := extractMetadata(task.Description)
+
+			// Display metadata in a cleaner two-column format
+			infoLayout := [][]string{
+				{styles["taskHeader"].Copy().Render("Created:"), styles["inputHint"].Render(task.CreatedAt.Local().Format("2006-01-02 15:04:05"))},
+			}
+
+			// Add priority if present
+			if task.Priority != "" {
+				var priorityText string
+				switch task.Priority {
+				case model.PriorityCritical:
+					priorityText = styles["priorityCritical"].Render(string(task.Priority))
+				case model.PriorityHigh:
+					priorityText = styles["priorityHigh"].Render(string(task.Priority))
+				case model.PriorityMedium:
+					priorityText = styles["priorityMedium"].Render(string(task.Priority))
+				case model.PriorityLow:
+					priorityText = styles["priorityLow"].Render(string(task.Priority))
+				}
+				infoLayout = append(infoLayout, []string{styles["taskHeader"].Copy().Render("Priority:"), priorityText})
+			}
+
+			// Add category if present
+			if task.Category != "" {
+				categoryStyle := styles["category"]
+				if colorStyle, ok := styles["category_"+strings.ToLower(task.Category)]; ok {
+					categoryStyle = colorStyle
+				}
+
+				infoLayout = append(infoLayout, []string{styles["taskHeader"].Copy().Render("Category:"), categoryStyle.Render(task.Category)})
+			}
+
+			// Format the two-column layout with consistent spacing
+			for _, row := range infoLayout {
+				expandedDetails = append(expandedDetails, fmt.Sprintf("  %-12s %s", row[0], row[1]))
+			}
+
+			// Add metadata tags if present
+			if len(metaInfo) > 0 {
+				expandedDetails = append(expandedDetails, "")
+				expandedDetails = append(expandedDetails, styles["secondary"].Copy().Bold(true).Render("Metadata Tags:"))
+
+				for key, value := range metaInfo {
+					expandedDetails = append(expandedDetails, fmt.Sprintf("  @%-10s %s", key+":", value))
+				}
+			}
+
+			// Add a help hint at the bottom
+			expandedDetails = append(expandedDetails, "")
+			expandedDetails = append(expandedDetails, styles["inputHint"].Italic(true).Render("  Press 'x' to collapse"))
+
+			// Render without additional styling that might cause formatting issues
+			expandedView := strings.Join(expandedDetails, "\n")
+			taskList = append(taskList, expandedView)
+		}
 
 		// Only add separators if we have more than 1 task
 		if len(visibleTasks) > 1 && i < len(visibleTasks)-1 {
@@ -281,6 +399,23 @@ func cleanMetadata(description string) string {
 	return strings.TrimSpace(description)
 }
 
+// extractMetadata extracts metadata tags from a task description
+func extractMetadata(description string) map[string]string {
+	metadata := make(map[string]string)
+
+	// Find all @tag:value patterns
+	metadataPattern := regexp.MustCompile(`@([a-zA-Z0-9_]+):([^\s@]+)`)
+	matches := metadataPattern.FindAllStringSubmatch(description, -1)
+
+	for _, match := range matches {
+		if len(match) == 3 {
+			metadata[match[1]] = match[2]
+		}
+	}
+
+	return metadata
+}
+
 // renderStatusBar creates the status bar at the bottom
 func renderStatusBar(m model.Model, styles map[string]lipgloss.Style, width int) string {
 	var statusBar strings.Builder
@@ -288,16 +423,25 @@ func renderStatusBar(m model.Model, styles map[string]lipgloss.Style, width int)
 	// Show temporary status message if set
 	var statusText string
 	if m.StatusMessage != "" {
-		statusText = m.StatusMessage
+		// Use different styling for different types of messages
+		if strings.Contains(strings.ToLower(m.StatusMessage), "error") ||
+			strings.Contains(strings.ToLower(m.StatusMessage), "failed") {
+			statusText = styles["error"].Render(m.StatusMessage)
+		} else if strings.Contains(strings.ToLower(m.StatusMessage), "complete") ||
+			strings.Contains(strings.ToLower(m.StatusMessage), "added") {
+			statusText = styles["success"].Render(m.StatusMessage)
+		} else {
+			statusText = styles["secondary"].Bold(true).Render(m.StatusMessage)
+		}
 	} else {
 		// Default help text when no status message
-		statusText = "Press ? for help"
+		statusText = styles["inputHint"].Render("Press ? for help")
 	}
 
 	// Left side: status message or help text
 	leftSide := statusText
 
-	// Right side: storage info and task stats
+	// Right side: storage info and task stats with progress bar
 	totalTasks := len(m.Tasks)
 	doneTasks := 0
 	for _, t := range m.Tasks {
@@ -306,16 +450,44 @@ func renderStatusBar(m model.Model, styles map[string]lipgloss.Style, width int)
 		}
 	}
 
-	// Format stats with progress percentage
+	// Format stats with progress percentage and mini progress bar
 	var progressPct float64
 	if totalTasks > 0 {
 		progressPct = float64(doneTasks) / float64(totalTasks) * 100
 	}
 
-	rightSide := fmt.Sprintf("%d/%d tasks complete (%.0f%%)", doneTasks, totalTasks, progressPct)
+	// Create a color based on progress
+	progressColor := styles["success"].GetForeground()
+	if progressPct < 30 {
+		progressColor = styles["warning"].GetForeground()
+	} else if progressPct < 70 {
+		progressColor = styles["primary"].GetForeground()
+	}
+
+	// Create a mini progress bar
+	progressBarWidth := 10
+	filledCells := int(progressPct / 100 * float64(progressBarWidth))
+	progressBar := strings.Repeat("█", filledCells) +
+		strings.Repeat("░", progressBarWidth-filledCells)
+
+	progressStyle := lipgloss.NewStyle().Foreground(progressColor)
+	percentText := fmt.Sprintf("%.0f%%", progressPct)
+
+	// Add file info
+	filePath := storage.GetStoragePath()
+	fileName := filepath.Base(filePath)
+
+	// Format right side
+	rightSide := fmt.Sprintf(
+		"%s %s %s • %s",
+		fmt.Sprintf("%d/%d", doneTasks, totalTasks),
+		progressStyle.Render(progressBar),
+		progressStyle.Render(percentText),
+		styles["inputHint"].Render(fileName),
+	)
 
 	// Determine spacing
-	spacerWidth := width - lipgloss.Width(leftSide) - lipgloss.Width(rightSide)
+	spacerWidth := width - lipgloss.Width(leftSide) - lipgloss.Width(rightSide) - 2
 	if spacerWidth < 1 {
 		spacerWidth = 1
 	}
@@ -325,6 +497,7 @@ func renderStatusBar(m model.Model, styles map[string]lipgloss.Style, width int)
 	statusBar.WriteString(strings.Repeat(" ", spacerWidth))
 	statusBar.WriteString(rightSide)
 
+	// Use the existing statusBar style
 	return styles["statusBar"].Render(statusBar.String())
 }
 
@@ -360,8 +533,10 @@ func renderHelpScreen(styles map[string]lipgloss.Style, width int, height int) s
 		sectionStyle.Render("TASK MANAGEMENT"),
 		fmt.Sprintf("%s : Add new task", keyStyle.Render("a")),
 		fmt.Sprintf("%s : Edit current task", keyStyle.Render("e")),
-		fmt.Sprintf("%s : Delete current task", keyStyle.Render("d")),
+		fmt.Sprintf("%s : Delete task (press twice to confirm)", keyStyle.Render("d")),
+		fmt.Sprintf("%s : Undo last deletion", keyStyle.Render("u")),
 		fmt.Sprintf("%s : Toggle task completion", keyStyle.Render("space, enter")),
+		fmt.Sprintf("%s : Expand/collapse task details", keyStyle.Render("x")),
 		fmt.Sprintf("%s : Cycle priority (none/low/medium/high/critical)", keyStyle.Render("p")),
 		"",
 		sectionStyle.Render("SORTING & FILTERING"),
@@ -379,4 +554,12 @@ func renderHelpScreen(styles map[string]lipgloss.Style, width int, height int) s
 	}
 
 	return styles["helpBox"].Copy().Width(width).Render(strings.Join(helpContent, "\n"))
+}
+
+// max helper function
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
