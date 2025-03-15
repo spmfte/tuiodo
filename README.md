@@ -1,4 +1,4 @@
-# 🪄 TUIODO - A Modern Terminal Task Manager
+# 🪄 T(UI)ODO - A Modern Terminal Task Manager
 
 TUIODO is a feature-rich, terminal-based task management application built with Go. It provides an intuitive, keyboard-driven interface with mouse support, making it easy to manage your tasks directly from the terminal.
 
