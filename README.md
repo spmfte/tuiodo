@@ -18,6 +18,12 @@ TUIODO is a feature-rich, terminal-based task management application built with 
 
 ## ✨ Features
 
+### 🎨 New UI Improvements
+- **Dynamic Category Colors** - Customize colors for each task category
+- **Priority Visibility** - Priority indicators automatically hidden for completed tasks
+- **Intelligent Sorting** - Completed tasks always appear at the bottom regardless of sort order
+- **Visual Consistency** - Categories for completed tasks appear with dimmed colors
+
 ### 🌈 Core Features
 
 - **Gorgeous Modern UI** with clean typography and visual hierarchy
@@ -280,16 +286,25 @@ ui:
 
 ```yaml
 colors:
-  categories:
-    Work: "#ff0000"      # Red
-    Personal: "#00ff00"  # Green
-    Health: "#0000ff"    # Blue
-    Finance: "#ffff00"   # Yellow
-  priorities:
-    Critical: "#ff0000"  # Red
-    High: "#ff7f00"      # Orange
-    Medium: "#ffff00"    # Yellow
-    Low: "#00ff00"       # Green
+  theme: "default"
+  primary: "#7C3AED"
+  secondary: "#2563EB"
+  tertiary: "#10B981"
+  # ... other base colors ...
+  
+  # Custom category colors
+  category_colors:
+    ui: "#8B5CF6"          # Purple for UI tasks
+    add-task: "#EC4899"    # Pink for add-task
+    bug: "#EF4444"         # Red for bugs
+    function: "#10B981"    # Green for function
+    fix: "#F59E0B"         # Amber for fixes
+    functionality: "#3B82F6" # Blue for functionality
+    layout: "#6366F1"      # Indigo for layout
+    docs: "#2563EB"        # Blue for docs
+    storage: "#14B8A6"     # Teal for storage
+    # You can add your own categories:
+    my-category: "#9333EA" # Custom color for your category
 ```
 
 #### 4. Key Bindings
