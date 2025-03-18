@@ -15,7 +15,16 @@ class Tuiodo < Formula
   depends_on "go" => :build
 
   def install
-    system "go", "build", *std_go_args(ldflags: "-s -w")
+    # Set build time, version and commit hash
+    commit = stable.version.to_s
+    ldflags = %W[
+      -s -w
+      -X main.Version=#{version}
+      -X main.BuildTime=#{time.iso8601}
+      -X main.GitCommit=#{commit[0..6]}
+    ].join(" ")
+
+    system "go", "build", *std_go_args(ldflags: ldflags)
   end
 
   def caveats
@@ -37,4 +46,4 @@ class Tuiodo < Formula
   test do
     system "#{bin}/tuiodo", "--version"
   end
-end 
+end
