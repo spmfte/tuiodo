@@ -1,4 +1,4 @@
-# 🪄 T(UI)ODO - A Modern Terminal Task Manager
+# T<sub><sub>(UI)</sub></sub>ODO - A Modern Terminal Task Manager
 
 TUIODO is a feature-rich, terminal-based task management application built with Go. It provides an intuitive, keyboard-driven interface with mouse support, making it easy to manage your tasks directly from the terminal.
 
@@ -16,15 +16,16 @@ TUIODO is a feature-rich, terminal-based task management application built with 
   <b>A beautiful, lightning-fast terminal task manager with extensive customization.</b>
 </p>
 
-## ✨ Features
+## Features
 
-### 🎨 New UI Improvements
+### New UI Improvements
 - **Dynamic Category Colors** - Customize colors for each task category
 - **Priority Visibility** - Priority indicators automatically hidden for completed tasks
 - **Intelligent Sorting** - Completed tasks always appear at the bottom regardless of sort order
 - **Visual Consistency** - Categories for completed tasks appear with dimmed colors
 
-### 🌈 Core Features
+
+### Core Features
 
 - **Gorgeous Modern UI** with clean typography and visual hierarchy
 - **Brilliant Colors** with monochrome mode support (`--no-color`)
@@ -33,7 +34,7 @@ TUIODO is a feature-rich, terminal-based task management application built with 
 - **Instant Performance** with optimized rendering and caching
 - **Comprehensive CLI** with extensive configuration options
 
-### 📋 Task Management
+### Task Management
 
 - **Priority Levels** (Critical/High/Medium/Low) with color coding
 - **Dynamic Category Organization** with configurable colors
@@ -45,7 +46,7 @@ TUIODO is a feature-rich, terminal-based task management application built with 
 - **Markdown Storage** in simple, human-readable format (`~/TODO.md` by default)
 - **Automatic Backups** with configurable options
 
-### 📝 Metadata Tags Support
+### Metadata Tags Support
 
 TUIODO supports several metadata tags for enhanced task tracking:
 
@@ -55,14 +56,14 @@ TUIODO supports several metadata tags for enhanced task tracking:
 - **@tag** - Add custom tags to group related tasks
 - **@status** - Track custom status values
 
-### 📝 Content & Storage
+### Content & Storage
 
 - **Automatic Backups** with configurable options
 - **Git Integration** for versioning your task list (coming soon)
 - **Multi-device Sync** via configurable storage paths (share tasks via Dropbox, etc.)
 - **Import/Export** to standard formats (coming soon)
 
-### 🔧 Advanced Capabilities
+### Advanced Capabilities
 
 - **Extensive Configuration** via YAML configuration files
 - **Theme Support** with pre-built and custom themes
@@ -70,7 +71,7 @@ TUIODO supports several metadata tags for enhanced task tracking:
 - **Command Palette** for quick access to all features (coming soon)
 - **Plugin System** for extending functionality (coming soon)
 
-## 📸 Screenshots
+## Screenshots
 
 <div align="center">
   <table>
@@ -97,7 +98,7 @@ TUIODO supports several metadata tags for enhanced task tracking:
   </table>
 </div>
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 
@@ -149,11 +150,23 @@ go build
 ./tuiodo
 ```
 
-## 🎮 Quick Start
+## Quick Start
 
 ### Basic Usage
 
 Just run `tuiodo` to start the application. Use the keyboard shortcuts to navigate and manage your tasks.
+It is recommended to use the following alias:
+```bash
+echo "alias todo='tuiodo'" >> "$HOME/.$(which "$SHELL" | awk -F'/' '{print $NF}')rc"
+```
+
+#### What this command does:
+1. `which "$SHELL"` retrieves the full path of the current shell (e.g., `/bin/zsh` or `/bin/bash`).
+2. `awk -F'/' '{print $NF}'` extracts only the last part of the path, which is the shell name (e.g., `zsh` or `bash`).
+3. `"$HOME/.$(which "$SHELL" | awk -F'/' '{print $NF}')rc"` constructs the appropriate shell configuration file path (`~/.zshrc`, `~/.bashrc`, etc.).
+4. `echo "alias todo='tuiodo'" >> "$HOME/.$(which "$SHELL" | awk -F'/' '{print $NF}')rc"` appends the alias to the correct shell config file.
+5. After running this command, reload your shell configuration with `source ~/.zshrc` (or `source ~/.bashrc`) to apply the alias.
+6. You can now run `todo` instead of `tuiodo` to start the application.
 
 ### Creating Tasks
 
@@ -232,7 +245,7 @@ tuiodo --category Work --view pending
 | Show/hide help      | <kbd>?</kbd> <kbd>F1</kbd>             |
 | Quit                | <kbd>q</kbd> <kbd>Ctrl+c</kbd>         |
 
-## 🔧 Configuration
+## Configuration
 
 TUIODO supports extensive configuration through a YAML file located at `~/.config/tuiodo/tuiodo.yaml`.
 
@@ -363,7 +376,7 @@ Tasks are stored in a simple Markdown format that's human-readable and version-c
   - Priorities: `@priority:high`, `@priority:medium`, `@priority:low`
   - Due dates: `@due:YYYY-MM-DD`
 
-## 🧩 Advanced Usage
+## Advanced Usage
 
 ### Custom Task Storage Location
 
@@ -402,7 +415,7 @@ Link tasks together with dependencies:
 - [ ] Write unit tests @depends:2
 ```
 
-## 🔄 Upgrading
+## Upgrading
 
 To upgrade to the latest version:
 
@@ -410,7 +423,7 @@ To upgrade to the latest version:
 go install github.com/spmfte/tuiodo@latest
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are very welcome! Please feel free to submit a Pull Request.
 
@@ -420,11 +433,11 @@ Contributions are very welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📜 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgements
+## Acknowledgements
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) - The amazing TUI framework
 - [Lip Gloss](https://github.com/charmbracelet/lipgloss) - Style definitions for terminal applications
