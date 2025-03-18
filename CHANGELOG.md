@@ -5,6 +5,25 @@ All notable changes to TUIODO will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-03-18
+
+### Added
+- Customizable category colors via configuration
+- Default sort by priority for better task organization
+- Dynamic color styling based on task category
+- Configuration example in TODO.md for reference
+
+### Changed
+- Improved UI aesthetics with category-based coloring
+- Categories for completed tasks now appear with dimmed colors
+- Completed tasks always appear at the bottom of lists regardless of sort order
+- Priority indicators now hidden for completed tasks
+
+### Fixed
+- Fixed category color handling in the UI
+- Fixed task sorting to maintain completed tasks at the bottom
+- Fixed configuration parser to handle category colors
+
 ## [1.1.1] - 2025-03-15
 
 ### Added

@@ -176,7 +176,11 @@ func main() {
 	if flags.NoColor {
 		styles = config.GetMonochromeStyles()
 	}
-	ui.UpdateStyles(styles)
+
+	// Pass the styles with category colors to update the UI
+	ui.UpdateStyles(struct{ CategoryColors map[string]string }{
+		CategoryColors: styles.CategoryColors,
+	})
 
 	// Get key bindings from config
 	keyBindings := config.GetKeyBindings(cfg)
@@ -203,8 +207,13 @@ func main() {
 			initialModel.CurrentView = model.TabCompleted
 		}
 	}
+
+	// Set sort option
 	if flags.Sort != "" {
 		initialModel.SortTasks(model.SortType(flags.Sort))
+	} else {
+		// Default sort by priority
+		initialModel.SortTasks(model.SortByPriority)
 	}
 
 	// Configure tea program options

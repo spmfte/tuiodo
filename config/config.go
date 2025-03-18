@@ -122,43 +122,69 @@ type SortConfig struct {
 	Direction string `yaml:"direction"` // Sort direction (asc, desc)
 }
 
-// Colors represents the theme colors configuration
+// Colors defines color settings for the application
 type Colors struct {
-	Primary     string `yaml:"primary"`
-	Secondary   string `yaml:"secondary"`
-	Tertiary    string `yaml:"tertiary"`
-	Success     string `yaml:"success"`
-	Warning     string `yaml:"warning"`
-	Error       string `yaml:"error"`
-	Critical    string `yaml:"critical"`
-	Text        string `yaml:"text"`
-	TextDim     string `yaml:"text_dim"`
-	TextMuted   string `yaml:"text_muted"`
-	Highlight   string `yaml:"highlight"`
-	Border      string `yaml:"border"`
-	BorderFocus string `yaml:"border_focus"`
-	Subtle      string `yaml:"subtle"`
-	Background  string `yaml:"background"`
+	Primary        string            `yaml:"primary"`
+	Secondary      string            `yaml:"secondary"`
+	Tertiary       string            `yaml:"tertiary"`
+	Success        string            `yaml:"success"`
+	Warning        string            `yaml:"warning"`
+	Error          string            `yaml:"error"`
+	Critical       string            `yaml:"critical"`
+	Text           string            `yaml:"text"`
+	TextDim        string            `yaml:"text_dim"`
+	TextMuted      string            `yaml:"text_muted"`
+	Highlight      string            `yaml:"highlight"`
+	Border         string            `yaml:"border"`
+	BorderFocus    string            `yaml:"border_focus"`
+	Subtle         string            `yaml:"subtle"`
+	Background     string            `yaml:"background"`
+	PriorityHigh   string            `yaml:"priority_high"`
+	PriorityMedium string            `yaml:"priority_medium"`
+	PriorityLow    string            `yaml:"priority_low"`
+	TaskDone       string            `yaml:"task_done"`
+	TaskPending    string            `yaml:"task_pending"`
+	CategoryColors map[string]string `yaml:"category_colors"`
 }
 
-// DefaultColors returns the default color theme
+// DefaultColors returns default color settings
 func DefaultColors() Colors {
 	return Colors{
-		Primary:     "#7C3AED", // Purple
-		Secondary:   "#2563EB", // Blue
-		Tertiary:    "#10B981", // Green
-		Success:     "#10B981", // Green
-		Warning:     "#F59E0B", // Amber
-		Error:       "#EF4444", // Red
-		Critical:    "#991B1B", // Dark Red
-		Text:        "#F9FAFB", // Nearly white
-		TextDim:     "#E5E7EB", // Light gray
-		TextMuted:   "#9CA3AF", // Medium gray
-		Highlight:   "#C4B5FD", // Light purple
-		Border:      "#4B5563", // Dark gray
-		BorderFocus: "#8B5CF6", // Medium purple
-		Subtle:      "#374151", // Very dark gray
-		Background:  "#1F2937", // Dark blue-gray
+		Primary:        "#7C3AED",
+		Secondary:      "#2563EB",
+		Tertiary:       "#10B981",
+		Success:        "#10B981",
+		Warning:        "#F59E0B",
+		Error:          "#EF4444",
+		Critical:       "#991B1B",
+		Text:           "#F9FAFB",
+		TextDim:        "#E5E7EB",
+		TextMuted:      "#9CA3AF",
+		Highlight:      "#C4B5FD",
+		Border:         "#4B5563",
+		BorderFocus:    "#8B5CF6",
+		Subtle:         "#374151",
+		Background:     "#1F2937",
+		PriorityHigh:   "#EF4444",
+		PriorityMedium: "#F59E0B",
+		PriorityLow:    "#10B981",
+		TaskDone:       "#6B7280",
+		TaskPending:    "#F9FAFB",
+		CategoryColors: map[string]string{
+			"ui":            "#8B5CF6", // Purple
+			"add-task":      "#EC4899", // Pink
+			"bug":           "#EF4444", // Red
+			"function":      "#10B981", // Green
+			"fix":           "#F59E0B", // Amber
+			"functionality": "#3B82F6", // Blue
+			"layout":        "#6366F1", // Indigo
+			"docs":          "#2563EB", // Blue
+			"storage":       "#14B8A6", // Teal
+			"work":          "#3B82F6", // Work - Blue
+			"personal":      "#EC4899", // Personal - Pink
+			"health":        "#10B981", // Health - Green
+			"finance":       "#6366F1", // Finance - Indigo
+		},
 	}
 }
 
@@ -212,16 +238,25 @@ func DefaultConfig() Config {
 			BorderFocus:    "#8B5CF6",
 			Subtle:         "#374151",
 			Background:     "#1F2937",
-			PriorityHigh:   "#DC2626",
+			PriorityHigh:   "#EF4444",
 			PriorityMedium: "#F59E0B",
 			PriorityLow:    "#10B981",
 			TaskDone:       "#6B7280",
 			TaskPending:    "#F9FAFB",
 			CategoryColors: map[string]string{
-				"Work":     "#3B82F6",
-				"Personal": "#EC4899",
-				"Health":   "#10B981",
-				"Finance":  "#6366F1",
+				"ui":            "#8B5CF6", // Purple
+				"add-task":      "#EC4899", // Pink
+				"bug":           "#EF4444", // Red
+				"function":      "#10B981", // Green
+				"fix":           "#F59E0B", // Amber
+				"functionality": "#3B82F6", // Blue
+				"layout":        "#6366F1", // Indigo
+				"docs":          "#2563EB", // Blue
+				"storage":       "#14B8A6", // Teal
+				"work":          "#3B82F6", // Work - Blue
+				"personal":      "#EC4899", // Personal - Pink
+				"health":        "#10B981", // Health - Green
+				"finance":       "#6366F1", // Finance - Indigo
 			},
 		},
 		Display: DisplayConfig{

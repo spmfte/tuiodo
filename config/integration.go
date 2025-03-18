@@ -44,6 +44,9 @@ type Styles struct {
 	// Input mode
 	InputField  lipgloss.Style
 	InputPrompt lipgloss.Style
+
+	// Category colors
+	CategoryColors map[string]string
 }
 
 // GetStyles returns all the styles based on the configuration
@@ -82,6 +85,9 @@ func GetStyles(cfg Config) Styles {
 	priorityMediumColor := lipgloss.Color(cfg.Colors.PriorityMedium)
 	priorityLowColor := lipgloss.Color(cfg.Colors.PriorityLow)
 	taskDoneColor := lipgloss.Color(cfg.Colors.TaskDone)
+
+	// Also pass the category colors
+	s.CategoryColors = cfg.Colors.CategoryColors
 
 	// Initialize styles
 	s.Title = lipgloss.NewStyle().

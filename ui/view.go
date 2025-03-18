@@ -226,9 +226,9 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 		taskRow.WriteString(checkboxStyle.Render(checkbox))
 		taskRow.WriteString(" ")
 
-		// Priority indicator if set
+		// Priority indicator if set and task is not completed
 		prioritySpace := 0
-		if task.Priority != "" {
+		if task.Priority != "" && !task.Done {
 			var priorityStyle lipgloss.Style
 			switch task.Priority {
 			case model.PriorityCritical:
@@ -283,10 +283,17 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 
 		categoryStr := fmt.Sprintf("%-*s", categoryWidth, category)
 		if task.Category != "" {
-			categoryStyle := styles["category"]
-			if colorStyle, ok := styles["category_"+strings.ToLower(task.Category)]; ok {
-				categoryStyle = colorStyle
+			categoryStyle := getCategoryStyle(styles, task.Category)
+
+			// For completed tasks, use a dimmed version of the category style
+			if task.Done {
+				categoryStyle = styles["taskDone"].Copy().
+					Strikethrough(false).
+					Italic(true).
+					Padding(0, 1).
+					MarginLeft(1)
 			}
+
 			taskRow.WriteString(categoryStyle.Render(categoryStr))
 		} else {
 			taskRow.WriteString(strings.Repeat(" ", int(categoryWidth)))
@@ -319,8 +326,8 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 				{styles["taskHeader"].Copy().Render("Created:"), styles["inputHint"].Render(task.CreatedAt.Local().Format("2006-01-02 15:04:05"))},
 			}
 
-			// Add priority if present
-			if task.Priority != "" {
+			// Add priority if present and task is not completed
+			if task.Priority != "" && !task.Done {
 				var priorityText string
 				switch task.Priority {
 				case model.PriorityCritical:
@@ -337,9 +344,15 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 
 			// Add category if present
 			if task.Category != "" {
-				categoryStyle := styles["category"]
-				if colorStyle, ok := styles["category_"+strings.ToLower(task.Category)]; ok {
-					categoryStyle = colorStyle
+				categoryStyle := getCategoryStyle(styles, task.Category)
+
+				// For completed tasks, use a dimmed version of the category style
+				if task.Done {
+					categoryStyle = styles["taskDone"].Copy().
+						Strikethrough(false).
+						Italic(true).
+						Padding(0, 1).
+						MarginLeft(1)
 				}
 
 				infoLayout = append(infoLayout, []string{styles["taskHeader"].Copy().Render("Category:"), categoryStyle.Render(task.Category)})
@@ -562,4 +575,16 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// getCategoryStyle returns the appropriate lipgloss style for a category
+func getCategoryStyle(styles map[string]lipgloss.Style, category string) lipgloss.Style {
+	// Try to find a specific style for this category
+	categoryKey := "category_" + strings.ToLower(category)
+	if style, ok := styles[categoryKey]; ok {
+		return style
+	}
+
+	// Fall back to default category style
+	return styles["category"]
 }

@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -22,11 +24,8 @@ type Colors struct {
 	Subtle      lipgloss.Color
 	Background  lipgloss.Color
 
-	// Category colors
-	CategoryWork     lipgloss.Color
-	CategoryPersonal lipgloss.Color
-	CategoryHealth   lipgloss.Color
-	CategoryFinance  lipgloss.Color
+	// Category colors (dynamic map)
+	CategoryColors map[string]lipgloss.Color
 }
 
 // Global variables to store the current styles and colors
@@ -71,11 +70,18 @@ func AppColors() Colors {
 		Subtle:      lipgloss.Color("#374151"), // Very dark gray
 		Background:  lipgloss.Color("#1F2937"), // Dark blue-gray
 
-		// Category colors
-		CategoryWork:     lipgloss.Color("#3B82F6"), // Blue
-		CategoryPersonal: lipgloss.Color("#EC4899"), // Pink
-		CategoryHealth:   lipgloss.Color("#10B981"), // Green
-		CategoryFinance:  lipgloss.Color("#6366F1"), // Indigo
+		// Initialize with some default category colors
+		CategoryColors: map[string]lipgloss.Color{
+			"ui":            lipgloss.Color("#8B5CF6"), // Purple for UI tasks
+			"add-task":      lipgloss.Color("#EC4899"), // Pink for add-task
+			"bug":           lipgloss.Color("#EF4444"), // Red for bugs
+			"function":      lipgloss.Color("#10B981"), // Green for function
+			"fix":           lipgloss.Color("#F59E0B"), // Amber for fixes
+			"functionality": lipgloss.Color("#3B82F6"), // Blue for functionality
+			"layout":        lipgloss.Color("#6366F1"), // Indigo for layout
+			"docs":          lipgloss.Color("#2563EB"), // Blue for docs
+			"storage":       lipgloss.Color("#14B8A6"), // Teal for storage
+		},
 	}
 }
 
@@ -96,22 +102,27 @@ func GetStyle(name string) lipgloss.Style {
 
 // UpdateStyles updates the global styles with the provided configuration
 func UpdateStyles(styles interface{}) {
-	// This is a simplified implementation
-	// In a real implementation, this would parse the provided styles config
-	// and update currentStyles and currentColors accordingly
+	// Default colors
+	colors := AppColors()
 
-	// For now, we'll just ensure the default styles are loaded
-	// if they haven't been already
-	if currentStyles == nil {
-		currentColors = AppColors()
-		currentStyles = CreateStyles(currentColors)
+	// If we have a config.Styles object, use its colors
+	if cfg, ok := styles.(struct{ CategoryColors map[string]string }); ok && cfg.CategoryColors != nil {
+		// Update category colors based on config
+		for category, colorStr := range cfg.CategoryColors {
+			colors.CategoryColors[strings.ToLower(category)] = lipgloss.Color(colorStr)
+		}
 	}
 
-	// When integrating with the config system fully, this would:
-	// 1. Extract colors from the config
-	// 2. Create a new Colors struct
-	// 3. Generate new styles based on these colors
-	// 4. Update currentColors and currentStyles
+	// Create styles from updated colors
+	currentColors = colors
+	currentStyles = CreateStyles(colors)
+
+	// Generate dynamic category styles based on the color map
+	baseStyle := lipgloss.NewStyle().Italic(true).Padding(0, 1)
+	for category, color := range colors.CategoryColors {
+		categoryKey := "category_" + strings.ToLower(category)
+		currentStyles[categoryKey] = baseStyle.Copy().Foreground(color)
+	}
 }
 
 // CreateStyles returns the styles for the application
@@ -128,7 +139,7 @@ func CreateStyles(colors Colors) map[string]lipgloss.Style {
 		BottomRight: "╯",
 	}
 
-	return map[string]lipgloss.Style{
+	styles := map[string]lipgloss.Style{
 		// App container
 		"app": lipgloss.NewStyle().
 			Padding(1, 2),
@@ -292,7 +303,7 @@ func CreateStyles(colors Colors) map[string]lipgloss.Style {
 			Padding(0, 1).
 			Margin(0, 1, 0, 0),
 
-		// Category badge
+		// Default category badge
 		"category": lipgloss.NewStyle().
 			Foreground(colors.Secondary).
 			Italic(true).
@@ -328,26 +339,7 @@ func CreateStyles(colors Colors) map[string]lipgloss.Style {
 		"date": lipgloss.NewStyle().
 			Foreground(colors.TextMuted).
 			Width(10),
-
-		// Category-specific styles
-		"category_work": lipgloss.NewStyle().
-			Foreground(colors.CategoryWork).
-			Italic(true).
-			Padding(0, 1),
-
-		"category_personal": lipgloss.NewStyle().
-			Foreground(colors.CategoryPersonal).
-			Italic(true).
-			Padding(0, 1),
-
-		"category_health": lipgloss.NewStyle().
-			Foreground(colors.CategoryHealth).
-			Italic(true).
-			Padding(0, 1),
-
-		"category_finance": lipgloss.NewStyle().
-			Foreground(colors.CategoryFinance).
-			Italic(true).
-			Padding(0, 1),
 	}
+
+	return styles
 }

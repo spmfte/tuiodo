@@ -512,14 +512,29 @@ func (m *Model) SortTasks(sortType SortType) {
 	switch sortType {
 	case SortByPriority:
 		sort.SliceStable(m.Tasks, func(i, j int) bool {
+			// Always place completed tasks at the bottom
+			if m.Tasks[i].Done != m.Tasks[j].Done {
+				return !m.Tasks[i].Done
+			}
+			// Then sort by priority
 			return priorityValue[m.Tasks[i].Priority] > priorityValue[m.Tasks[j].Priority]
 		})
 	case SortByCreatedAt:
 		sort.SliceStable(m.Tasks, func(i, j int) bool {
+			// Always place completed tasks at the bottom
+			if m.Tasks[i].Done != m.Tasks[j].Done {
+				return !m.Tasks[i].Done
+			}
+			// Then sort by creation date
 			return m.Tasks[i].CreatedAt.After(m.Tasks[j].CreatedAt)
 		})
 	case SortByCategory:
 		sort.SliceStable(m.Tasks, func(i, j int) bool {
+			// Always place completed tasks at the bottom
+			if m.Tasks[i].Done != m.Tasks[j].Done {
+				return !m.Tasks[i].Done
+			}
+			// Then sort by category
 			return m.Tasks[i].Category < m.Tasks[j].Category
 		})
 	}
