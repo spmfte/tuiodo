@@ -18,7 +18,7 @@ build() {
   export CGO_CXXFLAGS="${CXXFLAGS}"
   export CGO_LDFLAGS="${LDFLAGS}"
   export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
-  go build -o tuiodo
+  go build -o tuiodo -ldflags="-X main.Version=${pkgver} -X main.BuildTime=$(date -u '+%Y-%m-%dT%H:%M:%SZ') -X main.GitCommit=$(git rev-parse --short HEAD)"
 }
 
 package() {

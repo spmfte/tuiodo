@@ -42,7 +42,7 @@ fi
 
 # Build the project to ensure it compiles
 print_step "Building project..."
-go build
+go build -ldflags="-X main.Version=$CURRENT_VERSION -X main.BuildTime=$(date -u '+%Y-%m-%dT%H:%M:%SZ') -X main.GitCommit=$(git rev-parse --short HEAD)"
 if [ $? -ne 0 ]; then
     print_error "Build failed"
     exit 1
