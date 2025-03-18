@@ -16,12 +16,21 @@ class Tuiodo < Formula
 
   def install
     # Set build time, version and commit hash
-    commit = stable.version.to_s
+    if build.head?
+      # For HEAD installs, get the actual git commit
+      git_revision = Utils.git_short_head
+      git_version = "head"
+    else
+      # For release installs, use the version
+      git_revision = stable.version.to_s[0..6]
+      git_version = version
+    end
+
     ldflags = %W[
       -s -w
-      -X main.Version=#{version}
-      -X main.BuildTime=#{time.iso8601}
-      -X main.GitCommit=#{commit[0..6]}
+      -X main.Version=#{git_version}
+      -X main.BuildTime=#{Time.now.iso8601}
+      -X main.GitCommit=#{git_revision}
     ].join(" ")
 
     system "go", "build", *std_go_args(ldflags: ldflags)
