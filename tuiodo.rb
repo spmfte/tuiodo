@@ -1,9 +1,10 @@
 class Tuiodo < Formula
   desc "A modern terminal task manager with extensive customization"
   homepage "https://github.com/spmfte/tuiodo"
-  head "https://github.com/spmfte/tuiodo.git", branch: "master"
-  version "1.1.1"
+  url "https://github.com/spmfte/tuiodo/archive/refs/tags/v1.1.2.tar.gz"
+  sha256 "PLACEHOLDER" # Will be updated after the tarball is published
   license "MIT"
+  head "https://github.com/spmfte/tuiodo.git", branch: "master"
 
   # Additional metadata for the formula
   livecheck do
@@ -24,13 +25,12 @@ class Tuiodo < Formula
       Run `tuiodo` to start managing your tasks.
       For help and options, use `tuiodo --help`
       
-      New in v1.1.1:
-      - Enhanced task expansion UI with better formatting
-      - Improved spacebar functionality for task completion
-      - Circular cursor navigation (wraps around list edges)
-      - Delete confirmation with undo capability
-      - Advanced metadata tag support (@due, @tag, @status)
-      - Color-coded progress bar in status line
+      New in v1.1.2:
+      - Customizable category colors via configuration
+      - Default sort by priority for better task organization
+      - Categories for completed tasks now appear with dimmed colors
+      - Completed tasks always appear at the bottom of lists
+      - Priority indicators hidden for completed tasks
     EOS
   end
 
