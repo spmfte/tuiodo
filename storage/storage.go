@@ -95,7 +95,18 @@ func Initialize(filePath string, backupDir string, maxBackupFiles int, enableAut
 		}
 		todoFilePath = filePath
 	} else {
-		todoFilePath = DefaultTodoFilePath
+		// No explicit path provided, try to find git repository first
+		if gitPath, err := getGitRootTodoPath(); err == nil {
+			todoFilePath = gitPath
+		} else {
+			// Fall back to current working directory
+			if currentDir, err := os.Getwd(); err == nil {
+				todoFilePath = filepath.Join(currentDir, "TODO.md")
+			} else {
+				// Last resort: home directory
+				todoFilePath = DefaultTodoFilePath
+			}
+		}
 	}
 
 	backupDirectory = backupDir
