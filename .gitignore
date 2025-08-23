@@ -1,3 +1,7 @@
 tuiodo
 tuiodo.demo.tape
 GITHUB_TOKEN
+dist/
+*.tar.gz
+*.zip
+checksums.txt

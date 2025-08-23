@@ -41,7 +41,7 @@ brews:
       owner: spmfte
       name: homebrew-tuiodo
       branch: master
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+      token: "{{ .Env.GITHUB_TOKEN }}"
     homepage: "https://github.com/spmfte/tuiodo"
     description: "A modern terminal task manager with extensive customization"
     license: MIT
