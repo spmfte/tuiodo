@@ -40,9 +40,16 @@ if [ ! -f "main.go" ]; then
     exit 1
 fi
 
+# Check if GoReleaser is installed
+if ! command -v goreleaser &> /dev/null; then
+    print_error "GoReleaser is not installed. Please install it first:"
+    echo "go install github.com/goreleaser/goreleaser@latest"
+    exit 1
+fi
+
 # Build the project to ensure it compiles
 print_step "Building project..."
-go build -ldflags="-X main.Version=$CURRENT_VERSION -X main.BuildTime=$(date -u '+%Y-%m-%dT%H:%M:%SZ') -X main.GitCommit=$(git rev-parse --short HEAD)"
+go build -o tuiodo
 if [ $? -ne 0 ]; then
     print_error "Build failed"
     exit 1
@@ -61,7 +68,13 @@ CURRENT_VERSION=${CURRENT_VERSION#v}
 
 # Ask for the new version
 echo -e "\nCurrent version is: ${GREEN}$CURRENT_VERSION${NC}"
-read -p "Enter new version number (without 'v' prefix): " NEW_VERSION
+read -p "Enter new version number (without 'v' prefix) or press Enter to keep current version: " NEW_VERSION
+
+# If no version entered, keep current version
+if [ -z "$NEW_VERSION" ]; then
+    NEW_VERSION="$CURRENT_VERSION"
+    echo -e "Keeping current version: ${GREEN}$NEW_VERSION${NC}"
+fi
 
 # Validate version number format
 if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -80,8 +93,9 @@ read -p "Enter commit message: " COMMIT_MESSAGE
 # Confirm actions
 echo -e "\nThe following actions will be performed:"
 echo -e "1. Stage and commit changes with message: ${GREEN}$COMMIT_MESSAGE${NC}"
-echo -e "2. Create and push tag ${GREEN}v$NEW_VERSION${NC}"
+echo -e "2. Create and push tag v$NEW_VERSION"
 echo -e "3. Push changes to remote repository"
+echo -e "4. Run GoReleaser to create release and update Homebrew formula"
 echo
 confirm "Do you want to proceed?"
 
@@ -106,12 +120,14 @@ git push origin master
 git push origin "v$NEW_VERSION"
 print_success "Changes and tags pushed"
 
+# Run GoReleaser
+print_step "Running GoReleaser to create release and update Homebrew..."
+goreleaser release --clean
+
 # Final success message
 echo -e "\n${GREEN}Release v$NEW_VERSION completed successfully!${NC}"
-echo -e "Don't forget to:"
-echo "1. Update the Homebrew formula with the new version"
-echo "2. Update CHANGELOG.md with the release notes"
-echo "3. Create a GitHub release with the changelog"
-
-# Make the script executable
-chmod +x release.sh 
+echo -e "GoReleaser has:"
+echo "1. Created GitHub release with binaries for all platforms"
+echo "2. Updated the Homebrew formula automatically"
+echo "3. Pushed changes to your Homebrew tap repository"
+echo -e "\nUsers can now run: brew upgrade tuiodo" 
