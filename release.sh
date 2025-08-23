@@ -111,6 +111,10 @@ print_success "Changes committed"
 
 # Create and push tag
 print_step "Creating tag v$NEW_VERSION..."
+if git tag -l "v$NEW_VERSION" | grep -q "v$NEW_VERSION"; then
+    echo -e "${YELLOW}Tag v$NEW_VERSION already exists. Updating it...${NC}"
+    git tag -d "v$NEW_VERSION"
+fi
 git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
 print_success "Tag created"
 
