@@ -16,7 +16,7 @@ import (
 
 // Version information
 var (
-	Version   = "1.1.1"
+	Version   = "1.1.3"
 	BuildTime = "unknown"
 	GitCommit = "unknown"
 )
@@ -142,10 +142,8 @@ func main() {
 	if flags.StoragePath != "" {
 		storagePath = flags.StoragePath
 	} else {
-		storagePath = cfg.Storage.FilePath
-		if expanded, err := config.ExpandPath(storagePath); err == nil {
-			storagePath = expanded
-		}
+		// No explicit storage path provided, check for git repository first
+		storagePath = "" // Empty string will trigger git detection in storage.Initialize
 	}
 
 	// Handle backup directory configuration

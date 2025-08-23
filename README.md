@@ -59,7 +59,7 @@ TUIODO supports several metadata tags for enhanced task tracking:
 ### Content & Storage
 
 - **Automatic Backups** with configurable options
-- **Git Integration** for versioning your task list (coming soon)
+- **Git Repository Detection** - Automatically uses TODO.md at git repository root when available
 - **Multi-device Sync** via configurable storage paths (share tasks via Dropbox, etc.)
 - **Import/Export** to standard formats (coming soon)
 

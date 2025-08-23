@@ -24,6 +24,47 @@ func init() {
 	}
 }
 
+// findGitRepository searches for a git repository starting from the current directory
+// and walking up the directory tree
+func findGitRepository(startPath string) (string, error) {
+	currentPath := startPath
+
+	for {
+		// Check if current directory contains .git
+		gitPath := filepath.Join(currentPath, ".git")
+		if _, err := os.Stat(gitPath); err == nil {
+			// Found a git repository
+			return currentPath, nil
+		}
+
+		// Move up to parent directory
+		parentPath := filepath.Dir(currentPath)
+		if parentPath == currentPath {
+			// Reached root directory, no git repository found
+			return "", fmt.Errorf("no git repository found")
+		}
+		currentPath = parentPath
+	}
+}
+
+// getGitRootTodoPath returns the path to TODO.md at the root of the git repository
+func getGitRootTodoPath() (string, error) {
+	// Get current working directory
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	// Find git repository root
+	gitRoot, err := findGitRepository(currentDir)
+	if err != nil {
+		return "", err
+	}
+
+	// Return path to TODO.md at git root
+	return filepath.Join(gitRoot, "TODO.md"), nil
+}
+
 // Storage configuration
 var (
 	todoFilePath    = DefaultTodoFilePath

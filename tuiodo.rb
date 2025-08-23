@@ -1,7 +1,7 @@
 class Tuiodo < Formula
   desc "A modern terminal task manager with extensive customization"
   homepage "https://github.com/spmfte/tuiodo"
-  url "https://github.com/spmfte/tuiodo/archive/refs/tags/v1.1.2.tar.gz"
+  url "https://github.com/spmfte/tuiodo/archive/refs/tags/v1.1.3.tar.gz"
   sha256 "6186659032fa47685499ad52b59f9e4ea1c9c29dc18197b761d9497d46fe3581"
   license "MIT"
   head "https://github.com/spmfte/tuiodo.git", branch: "master"
@@ -42,6 +42,11 @@ class Tuiodo < Formula
       
       Run `tuiodo` to start managing your tasks.
       For help and options, use `tuiodo --help`
+      
+      New in v1.1.3:
+      - Automatic git repository detection for TODO.md files
+      - When in a git repository, automatically uses TODO.md at the repository root
+      - Falls back to home directory TODO.md when not in a git repository
       
       New in v1.1.2:
       - Customizable category colors via configuration

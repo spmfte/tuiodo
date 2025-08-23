@@ -1,6 +1,6 @@
 # Maintainer: Your Name <your.email@example.com>
 pkgname=tuiodo
-pkgver=1.0.0
+pkgver=1.1.3
 pkgrel=1
 pkgdesc="A modern terminal task manager with extensive customization"
 arch=('x86_64')
