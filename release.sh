@@ -121,7 +121,7 @@ print_success "Tag created"
 # Push changes and tags
 print_step "Pushing changes and tags to remote..."
 git push origin master
-git push origin "v$NEW_VERSION"
+git push origin "v$NEW_VERSION" --force
 print_success "Changes and tags pushed"
 
 # Run GoReleaser
