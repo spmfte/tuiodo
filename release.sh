@@ -137,7 +137,7 @@ print_success "Changes and tags pushed"
 
 # Run GoReleaser
 print_step "Running GoReleaser to create release and update Homebrew..."
-goreleaser release --clean --force
+goreleaser release
 
 # Final success message
 echo -e "\n${GREEN}Release v$NEW_VERSION completed successfully!${NC}"
