@@ -3,6 +3,8 @@
 # Exit on error
 set -e
 
+GITHUB_TOKEN=
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -44,6 +46,15 @@ fi
 if ! command -v goreleaser &> /dev/null; then
     print_error "GoReleaser is not installed. Please install it first:"
     echo "go install github.com/goreleaser/goreleaser@latest"
+    exit 1
+fi
+
+# Read GitHub token from file
+if [ -f "GITHUB_TOKEN" ]; then
+    export GITHUB_TOKEN=$(cat GITHUB_TOKEN)
+    print_success "GitHub token loaded from GITHUB_TOKEN file"
+else
+    print_error "GITHUB_TOKEN file not found. Please create it with your GitHub token."
     exit 1
 fi
 
