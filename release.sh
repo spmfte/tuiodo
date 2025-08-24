@@ -89,6 +89,12 @@ read -p "Enter new version number (without 'v' prefix) or press Enter to keep cu
 if [ -z "$NEW_VERSION" ]; then
     NEW_VERSION="$CURRENT_VERSION"
     echo -e "Keeping current version: ${GREEN}$NEW_VERSION${NC}"
+    
+    # Check if there are any changes to commit
+    if [ -z "$(git status --porcelain)" ]; then
+        print_error "No changes to commit. Please make some changes first or specify a new version."
+        exit 1
+    fi
 fi
 
 # Validate version number format
