@@ -58,6 +58,10 @@ else
     exit 1
 fi
 
+# Set GitHub repository for GoReleaser
+export GITHUB_REPOSITORY="spmfte/tuiodo"
+print_success "GitHub repository set to $GITHUB_REPOSITORY"
+
 # Build the project to ensure it compiles
 print_step "Building project..."
 go build -o tuiodo
