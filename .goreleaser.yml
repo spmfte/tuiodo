@@ -31,8 +31,8 @@ archives:
 checksum:
   name_template: 'checksums.txt'
 
-# Use homebrew_casks for modern Homebrew integration
-homebrew_casks:
+# Use brews section to update the existing Homebrew formula
+brews:
   - name: tuiodo
     repository:
       owner: spmfte
@@ -42,4 +42,10 @@ homebrew_casks:
     homepage: "https://github.com/spmfte/tuiodo"
     description: "A modern terminal task manager with extensive customization"
     license: MIT
+    dependencies:
+      - go
+    test: |
+      system "#{bin}/tuiodo", "--version"
+    install: |
+      bin.install "tuiodo"
     commit_msg_template: "Update tuiodo to {{ .Version }}"
