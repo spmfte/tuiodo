@@ -35,8 +35,8 @@ archives:
 checksum:
   name_template: 'checksums.txt'
 
-# Use the new homebrew_casks section instead of deprecated brews
-homebrew_casks:
+# Use brews section to update the existing Homebrew formula
+brews:
   - name: tuiodo
     repository:
       owner: spmfte
@@ -46,6 +46,12 @@ homebrew_casks:
     homepage: "https://github.com/spmfte/tuiodo"
     description: "A modern terminal task manager with extensive customization"
     license: MIT
-    conflicts:
-      - formula: tuiodo
-    commit_msg_template: "Update {{ .Name }} to {{ .Version }}"
+    dependencies:
+      - go
+    test: |
+      system "#{bin}/tuiodo", "--version"
+    install: |
+      bin.install "tuiodo"
+    commit_msg_template: "Update tuiodo to {{ .Version }}"
+    # Ensure GoReleaser calculates SHA256 from source tarball
+    url_template: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}/archive/refs/tags/v{{ .Version }}.tar.gz"

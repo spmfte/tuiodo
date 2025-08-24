@@ -4,7 +4,8 @@
 set -e
 
 # Release script for TUIODO - automatically handles Homebrew formula updates
-GITHUB_TOKEN=$GITHUB_TOKEN
+# Now with proper SHA256 calculation from source tarballs
+GITHUB_TOKEN=
 
 # Colors for output
 RED='\033[0;31m'
