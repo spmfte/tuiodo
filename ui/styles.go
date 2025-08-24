@@ -254,6 +254,10 @@ func CreateStyles(colors Colors) map[string]lipgloss.Style {
 		"checkboxDone": lipgloss.NewStyle().
 			Foreground(colors.Success),
 
+		"checkboxArchived": lipgloss.NewStyle().
+			Foreground(colors.TextMuted).
+			Italic(true),
+
 		// Task text styles
 		"taskPending": lipgloss.NewStyle().
 			Foreground(colors.Text),
@@ -261,6 +265,11 @@ func CreateStyles(colors Colors) map[string]lipgloss.Style {
 		"taskDone": lipgloss.NewStyle().
 			Strikethrough(true).
 			Foreground(colors.TextMuted),
+
+		"taskArchived": lipgloss.NewStyle().
+			Foreground(colors.TextMuted).
+			Italic(true).
+			Strikethrough(true),
 
 		// Task expanded view
 		"taskExpanded": lipgloss.NewStyle().

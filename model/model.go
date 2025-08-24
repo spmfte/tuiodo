@@ -1,7 +1,9 @@
 package model
 
 import (
+	"regexp"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -23,6 +25,7 @@ type Task struct {
 	Category    string
 	Priority    Priority
 	CreatedAt   time.Time         // When the task was created
+	Archived    bool              // Whether the task is archived
 	Metadata    map[string]string // Additional metadata like due dates, tags, status
 }
 
@@ -35,6 +38,7 @@ const (
 	TabPending   TabView = "pending"
 	TabCompleted TabView = "completed"
 	TabCategory  TabView = "category" // Filtered by specific category
+	TabArchived  TabView = "archived" // Show archived tasks
 )
 
 // SortType represents different ways to sort tasks
@@ -53,6 +57,7 @@ type Model struct {
 	SelectedTasks   map[int]struct{}
 	InputMode       bool
 	Input           string
+	InputCursor     int // Position of cursor within input field
 	Categories      map[string]struct{}
 	CurrentFilter   string  // Category filter
 	CurrentView     TabView // Current tab view
@@ -150,6 +155,7 @@ func (m Model) GetFilteredTasks() []Task {
 	// First apply tab view filter
 	switch m.CurrentView {
 	case TabAll:
+		// Show all tasks including archived
 		filteredTasks = m.Tasks
 	case TabToday:
 		// TODO: Implement date filtering when we add due dates
@@ -274,7 +280,7 @@ func (m *Model) CyclePriority() {
 		return
 	}
 
-	priorities := []Priority{PriorityNone, PriorityLow, PriorityMedium, PriorityHigh, PriorityCritical}
+	priorities := []Priority{PriorityLow, PriorityMedium, PriorityHigh, PriorityCritical}
 
 	// Find current priority position
 	currentIndex := 0
@@ -288,19 +294,45 @@ func (m *Model) CyclePriority() {
 	// Cycle to next priority
 	nextIndex := (currentIndex + 1) % len(priorities)
 	m.Tasks[m.Cursor].Priority = priorities[nextIndex]
+
+	// Auto-sort by priority to update UI immediately
+	m.SortTasks(SortByPriority)
+
+	// Find the task in the new sorted position and update cursor
+	taskToFind := m.Tasks[m.Cursor]
+	for i, task := range m.Tasks {
+		if task.Description == taskToFind.Description &&
+			task.Category == taskToFind.Category &&
+			task.CreatedAt == taskToFind.CreatedAt {
+			m.Cursor = i
+			break
+		}
+	}
+
+	// Recalculate pagination after sorting
+	m.recalculatePagination()
 }
 
 // AddTask adds a new task to the model
-func (m *Model) AddTask(description, category string) {
+func (m *Model) AddTask(description, category string, priority Priority) {
 	if category != "" {
 		m.Categories[category] = struct{}{}
+	}
+
+	// Default to low priority if none specified
+	if priority == PriorityNone {
+		priority = PriorityLow
 	}
 
 	m.Tasks = append(m.Tasks, Task{
 		Description: description,
 		Category:    category,
+		Priority:    priority,
 		CreatedAt:   time.Now(),
 	})
+
+	// Auto-sort by priority to ensure proper positioning
+	m.SortTasks(SortByPriority)
 }
 
 // UpdateTask updates an existing task
@@ -316,6 +348,9 @@ func (m *Model) UpdateTask(index int, description, category string, priority Pri
 	m.Tasks[index].Description = description
 	m.Tasks[index].Category = category
 	m.Tasks[index].Priority = priority
+
+	// Auto-sort by priority to ensure proper positioning
+	m.SortTasks(SortByPriority)
 }
 
 // DeleteCurrentTask deletes the task at the current cursor position
@@ -446,6 +481,140 @@ func (m *Model) MoveCursorDown() {
 	}
 }
 
+// MoveInputCursorLeft moves the cursor left within the input field
+func (m *Model) MoveInputCursorLeft() {
+	if m.InputCursor > 0 {
+		m.InputCursor--
+	}
+}
+
+// MoveInputCursorRight moves the cursor right within the input field
+func (m *Model) MoveInputCursorRight() {
+	if m.InputCursor < len(m.Input) {
+		m.InputCursor++
+	}
+}
+
+// MoveInputCursorToStart moves the cursor to the beginning of the input field
+func (m *Model) MoveInputCursorToStart() {
+	m.InputCursor = 0
+}
+
+// MoveInputCursorToEnd moves the cursor to the end of the input field
+func (m *Model) MoveInputCursorToEnd() {
+	m.InputCursor = len(m.Input)
+}
+
+// InsertTextAtCursor inserts text at the current cursor position
+func (m *Model) InsertTextAtCursor(text string) {
+	if m.InputCursor == len(m.Input) {
+		// At the end, just append
+		m.Input += text
+	} else {
+		// Insert in the middle
+		m.Input = m.Input[:m.InputCursor] + text + m.Input[m.InputCursor:]
+	}
+	m.InputCursor += len(text)
+}
+
+// DeleteTextAtCursor deletes one character at the current cursor position
+func (m *Model) DeleteTextAtCursor() {
+	if m.InputCursor < len(m.Input) {
+		m.Input = m.Input[:m.InputCursor] + m.Input[m.InputCursor+1:]
+	}
+}
+
+// DeleteTextBeforeCursor deletes one character before the current cursor position
+func (m *Model) DeleteTextBeforeCursor() {
+	if m.InputCursor > 0 {
+		m.Input = m.Input[:m.InputCursor-1] + m.Input[m.InputCursor:]
+		m.InputCursor--
+	}
+}
+
+// ArchiveCurrentTask archives the task at the current cursor position
+func (m *Model) ArchiveCurrentTask() {
+	filteredTasks := m.GetVisibleTasks()
+	if len(filteredTasks) == 0 || m.Cursor >= len(filteredTasks) {
+		return
+	}
+
+	// Find the actual index in the Tasks slice
+	taskToArchive := filteredTasks[m.Cursor]
+	var taskIdx int
+	found := false
+
+	for i, task := range m.Tasks {
+		if task.Description == taskToArchive.Description &&
+			task.Category == taskToArchive.Category &&
+			task.CreatedAt == taskToArchive.CreatedAt {
+			taskIdx = i
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return // Task not found in the main list
+	}
+
+	// Archive the task
+	m.Tasks[taskIdx].Archived = true
+
+	// Recalculate pagination after archiving
+	m.recalculatePagination()
+}
+
+// UnarchiveTask unarchives a task by its index
+func (m *Model) UnarchiveTask(index int) {
+	if index < 0 || index >= len(m.Tasks) {
+		return
+	}
+	m.Tasks[index].Archived = false
+	m.recalculatePagination()
+}
+
+// getTaskStatus returns a numeric status for sorting (lower = higher priority)
+func getTaskStatus(task Task) int {
+	if task.Archived {
+		return 2 // Archived tasks (middle priority)
+	} else if task.Done {
+		return 3 // Completed tasks (lowest priority)
+	}
+	return 1 // Active tasks (highest priority)
+}
+
+// ParsePriorityFromText extracts priority from text and returns cleaned text and priority
+func ParsePriorityFromText(text string) (string, Priority) {
+	// Regex to match @priority:value
+	priorityRegex := regexp.MustCompile(`@priority:(high|medium|low|critical)`)
+
+	match := priorityRegex.FindStringSubmatch(text)
+	if len(match) > 1 {
+		priorityStr := match[1]
+		var priority Priority
+		switch priorityStr {
+		case "critical":
+			priority = PriorityCritical
+		case "high":
+			priority = PriorityHigh
+		case "medium":
+			priority = PriorityMedium
+		case "low":
+			priority = PriorityLow
+		default:
+			priority = PriorityLow
+		}
+
+		// Remove the priority tag from text
+		cleanedText := strings.TrimSpace(priorityRegex.ReplaceAllString(text, ""))
+		return cleanedText, priority
+	}
+
+	// No priority found, return original text with default priority
+	return text, PriorityLow
+}
+
 // UpdateWindowSize updates the stored window dimensions
 func (m *Model) UpdateWindowSize(width, height int) {
 	m.Width = width
@@ -512,29 +681,35 @@ func (m *Model) SortTasks(sortType SortType) {
 	switch sortType {
 	case SortByPriority:
 		sort.SliceStable(m.Tasks, func(i, j int) bool {
-			// Always place completed tasks at the bottom
-			if m.Tasks[i].Done != m.Tasks[j].Done {
-				return !m.Tasks[i].Done
+			// First sort by status: Active > Archived > Completed
+			statusI := getTaskStatus(m.Tasks[i])
+			statusJ := getTaskStatus(m.Tasks[j])
+			if statusI != statusJ {
+				return statusI < statusJ // Lower status number = higher priority
 			}
-			// Then sort by priority
+			// Within same status group, sort by priority
 			return priorityValue[m.Tasks[i].Priority] > priorityValue[m.Tasks[j].Priority]
 		})
 	case SortByCreatedAt:
 		sort.SliceStable(m.Tasks, func(i, j int) bool {
-			// Always place completed tasks at the bottom
-			if m.Tasks[i].Done != m.Tasks[j].Done {
-				return !m.Tasks[i].Done
+			// First sort by status: Active > Archived > Completed
+			statusI := getTaskStatus(m.Tasks[i])
+			statusJ := getTaskStatus(m.Tasks[j])
+			if statusI != statusJ {
+				return statusI < statusJ // Lower status number = higher priority
 			}
-			// Then sort by creation date
+			// Within same status group, sort by creation date
 			return m.Tasks[i].CreatedAt.After(m.Tasks[j].CreatedAt)
 		})
 	case SortByCategory:
 		sort.SliceStable(m.Tasks, func(i, j int) bool {
-			// Always place completed tasks at the bottom
-			if m.Tasks[i].Done != m.Tasks[j].Done {
-				return !m.Tasks[i].Done
+			// First sort by status: Active > Archived > Completed
+			statusI := getTaskStatus(m.Tasks[i])
+			statusJ := getTaskStatus(m.Tasks[j])
+			if statusI != statusJ {
+				return statusI < statusJ // Lower status number = higher priority
 			}
-			// Then sort by category
+			// Within same status group, sort by category
 			return m.Tasks[i].Category < m.Tasks[j].Category
 		})
 	}

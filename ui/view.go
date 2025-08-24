@@ -145,12 +145,16 @@ func renderInputForm(m model.Model, styles map[string]lipgloss.Style, width int)
 	hint := styles["inputHint"].Render(" (Format: Category: Task description)")
 	cursor := styles["inputCursor"].Render("▋")
 
+	// Split input into before and after cursor
+	inputBefore := m.Input[:m.InputCursor]
+	inputAfter := m.Input[m.InputCursor:]
+
 	inputForm := []string{
 		prompt + hint,
 		"",
-		styles["input"].Render("→ " + m.Input + cursor),
+		styles["input"].Render("→ " + inputBefore + cursor + inputAfter),
 		"",
-		styles["inputHint"].Render("Press Enter to save, Esc to cancel"),
+		styles["inputHint"].Render("Press Enter to save, Esc to cancel • Use ←→ to move cursor • Add @priority:high/medium/low/critical"),
 	}
 
 	return styles["inputBox"].Render(strings.Join(inputForm, "\n"))
@@ -208,11 +212,15 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 
 		// Cursor indicator with checkbox
 		var checkboxStyle lipgloss.Style
-		checkbox := "[ ]"
-		if task.Done {
+		var checkbox string
+		if task.Archived {
+			checkbox = "[A]"
+			checkboxStyle = styles["checkboxArchived"]
+		} else if task.Done {
 			checkbox = "[✓]"
 			checkboxStyle = styles["checkboxDone"]
 		} else {
+			checkbox = "[ ]"
 			checkboxStyle = styles["checkboxPending"]
 		}
 
@@ -240,6 +248,12 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 			case model.PriorityLow:
 				priorityStyle = styles["priorityLow"]
 			}
+
+			// If task is archived, use archived priority style
+			if task.Archived {
+				priorityStyle = priorityStyle.Copy().Foreground(styles["taskArchived"].GetForeground()).Italic(true)
+			}
+
 			// Adjust space for the priority tag
 			priorityText := string(task.Priority)
 			priorityColored := priorityStyle.Render(priorityText)
@@ -252,9 +266,13 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 		adjustedTaskWidth := taskWidth - prioritySpace
 
 		// Task description
-		taskStyle := styles["taskPending"]
-		if task.Done {
+		var taskStyle lipgloss.Style
+		if task.Archived {
+			taskStyle = styles["taskArchived"]
+		} else if task.Done {
 			taskStyle = styles["taskDone"]
+		} else {
+			taskStyle = styles["taskPending"]
 		}
 
 		// Clean description and truncate if needed
@@ -285,8 +303,15 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 		if task.Category != "" {
 			categoryStyle := getCategoryStyle(styles, task.Category)
 
-			// For completed tasks, use a dimmed version of the category style
-			if task.Done {
+			// For archived tasks, use archived style
+			if task.Archived {
+				categoryStyle = styles["taskArchived"].Copy().
+					Strikethrough(false).
+					Italic(true).
+					Padding(0, 1).
+					MarginLeft(1)
+			} else if task.Done {
+				// For completed tasks, use a dimmed version of the category style
 				categoryStyle = styles["taskDone"].Copy().
 					Strikethrough(false).
 					Italic(true).
@@ -346,8 +371,15 @@ func renderTaskList(m model.Model, styles map[string]lipgloss.Style, width int) 
 			if task.Category != "" {
 				categoryStyle := getCategoryStyle(styles, task.Category)
 
-				// For completed tasks, use a dimmed version of the category style
-				if task.Done {
+				// For archived tasks, use archived style
+				if task.Archived {
+					categoryStyle = styles["taskArchived"].Copy().
+						Strikethrough(false).
+						Italic(true).
+						Padding(0, 1).
+						MarginLeft(1)
+				} else if task.Done {
+					// For completed tasks, use a dimmed version of the category style
 					categoryStyle = styles["taskDone"].Copy().
 						Strikethrough(false).
 						Italic(true).
@@ -550,6 +582,8 @@ func renderHelpScreen(styles map[string]lipgloss.Style, width int, height int) s
 		fmt.Sprintf("%s : Undo last deletion", keyStyle.Render("u")),
 		fmt.Sprintf("%s : Toggle task completion", keyStyle.Render("space, enter")),
 		fmt.Sprintf("%s : Expand/collapse task details", keyStyle.Render("x")),
+		fmt.Sprintf("%s : Archive current task", keyStyle.Render("A")),
+		fmt.Sprintf("%s : Unarchive current task", keyStyle.Render("U")),
 		fmt.Sprintf("%s : Cycle priority (none/low/medium/high/critical)", keyStyle.Render("p")),
 		"",
 		sectionStyle.Render("SORTING & FILTERING"),

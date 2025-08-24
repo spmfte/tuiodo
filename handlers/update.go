@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -68,6 +69,7 @@ func handleKeypress(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 	case "a": // Add new task
 		m.InputMode = true
 		m.Input = ""
+		m.InputCursor = 0
 	case "e": // Edit current task
 		filteredTasks := m.GetVisibleTasks()
 		if len(filteredTasks) > 0 && m.Cursor < len(filteredTasks) {
@@ -81,6 +83,7 @@ func handleKeypress(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 			} else {
 				m.Input = task.Description
 			}
+			m.InputCursor = len(m.Input) // Start cursor at the end
 		}
 	case "d": // Delete task
 		filteredTasks := m.GetVisibleTasks()
@@ -186,6 +189,37 @@ func handleKeypress(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 				m.ExpandedTaskIdx = m.Cursor
 			}
 		}
+	case "A": // Archive current task
+		filteredTasks := m.GetVisibleTasks()
+		if len(filteredTasks) > 0 && m.Cursor < len(filteredTasks) {
+			m.ArchiveCurrentTask()
+			storage.SaveTasks(m.Tasks)
+			m.SetStatus("Task archived")
+		}
+	case "U": // Unarchive current task
+		filteredTasks := m.GetVisibleTasks()
+		if len(filteredTasks) > 0 && m.Cursor < len(filteredTasks) {
+			// Find the actual index in the Tasks slice
+			taskToUnarchive := filteredTasks[m.Cursor]
+			var taskIdx int
+			found := false
+
+			for i, task := range m.Tasks {
+				if task.Description == taskToUnarchive.Description &&
+					task.Category == taskToUnarchive.Category &&
+					task.CreatedAt == taskToUnarchive.CreatedAt {
+					taskIdx = i
+					found = true
+					break
+				}
+			}
+
+			if found {
+				m.UnarchiveTask(taskIdx)
+				storage.SaveTasks(m.Tasks)
+				m.SetStatus("Task unarchived")
+			}
+		}
 	case "u": // Undo last delete
 		if m.LastDeleted != nil {
 			if m.UndoDelete() {
@@ -212,22 +246,41 @@ func handleInputMode(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 				description = strings.TrimSpace(parts[1])
 			}
 
-			m.AddTask(description, category)
+			// Parse priority from description (e.g., "Task @priority:high")
+			cleanDescription, priority := model.ParsePriorityFromText(description)
+
+			m.AddTask(cleanDescription, category, priority)
 			storage.SaveTasks(m.Tasks)
-			m.SetStatus("Task added")
+
+			// Show status with priority info
+			if priority != model.PriorityLow {
+				m.SetStatus(fmt.Sprintf("Task added with %s priority", priority))
+			} else {
+				m.SetStatus("Task added with low priority")
+			}
 
 			// Recalculate pagination after adding task
 			m.RecalculatePagination()
 		}
 		m.InputMode = false
 		m.Input = ""
+		m.InputCursor = 0
 	case "esc":
 		m.InputMode = false
 		m.Input = ""
+		m.InputCursor = 0
+	case "left":
+		m.MoveInputCursorLeft()
+	case "right":
+		m.MoveInputCursorRight()
+	case "home":
+		m.MoveInputCursorToStart()
+	case "end":
+		m.MoveInputCursorToEnd()
 	case "backspace":
-		if len(m.Input) > 0 {
-			m.Input = m.Input[:len(m.Input)-1]
-		}
+		m.DeleteTextBeforeCursor()
+	case "delete":
+		m.DeleteTextAtCursor()
 	case "tab":
 		// Try to auto-complete with a category if typed part of one
 		if !strings.Contains(m.Input, ":") {
@@ -236,6 +289,7 @@ func handleInputMode(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 				for category := range m.Categories {
 					if strings.HasPrefix(strings.ToLower(category), strings.ToLower(partialCategory)) {
 						m.Input = category + ": "
+						m.InputCursor = len(m.Input)
 						break
 					}
 				}
@@ -244,7 +298,7 @@ func handleInputMode(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 	default:
 		// Only add to input if it's a printable character
 		if len(msg.String()) == 1 {
-			m.Input += msg.String()
+			m.InsertTextAtCursor(msg.String())
 		}
 	}
 
@@ -265,25 +319,38 @@ func handleEditMode(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 				description = strings.TrimSpace(parts[1])
 			}
 
-			// Get the task's current priority
-			priority := model.PriorityNone
-			if m.EditingTaskIdx < len(m.Tasks) {
-				priority = m.Tasks[m.EditingTaskIdx].Priority
-			}
+			// Parse priority from description (e.g., "Task @priority:high")
+			cleanDescription, priority := model.ParsePriorityFromText(description)
 
-			m.UpdateTask(m.EditingTaskIdx, description, category, priority)
+			m.UpdateTask(m.EditingTaskIdx, cleanDescription, category, priority)
 			storage.SaveTasks(m.Tasks)
-			m.SetStatus("Task updated")
+
+			// Show status with priority info
+			if priority != model.PriorityLow {
+				m.SetStatus(fmt.Sprintf("Task updated with %s priority", priority))
+			} else {
+				m.SetStatus("Task updated with low priority")
+			}
 		}
 		m.EditingTask = false
 		m.Input = ""
+		m.InputCursor = 0
 	case "esc":
 		m.EditingTask = false
 		m.Input = ""
+		m.InputCursor = 0
+	case "left":
+		m.MoveInputCursorLeft()
+	case "right":
+		m.MoveInputCursorRight()
+	case "home":
+		m.MoveInputCursorToStart()
+	case "end":
+		m.MoveInputCursorToEnd()
 	case "backspace":
-		if len(m.Input) > 0 {
-			m.Input = m.Input[:len(m.Input)-1]
-		}
+		m.DeleteTextBeforeCursor()
+	case "delete":
+		m.DeleteTextAtCursor()
 	case "tab":
 		// Try to auto-complete with a category if typed part of one
 		if !strings.Contains(m.Input, ":") {
@@ -292,6 +359,7 @@ func handleEditMode(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 				for category := range m.Categories {
 					if strings.HasPrefix(strings.ToLower(category), strings.ToLower(partialCategory)) {
 						m.Input = category + ": "
+						m.InputCursor = len(m.Input)
 						break
 					}
 				}
@@ -300,7 +368,7 @@ func handleEditMode(msg tea.KeyMsg, m model.Model) (model.Model, tea.Cmd) {
 	default:
 		// Only add to input if it's a printable character
 		if len(msg.String()) == 1 {
-			m.Input += msg.String()
+			m.InsertTextAtCursor(msg.String())
 		}
 	}
 

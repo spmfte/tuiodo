@@ -78,6 +78,7 @@ var (
 // Regex patterns for parsing metadata - compile only once for better performance
 var (
 	priorityPattern  = regexp.MustCompile(`@priority:(high|medium|low|critical)`)
+	archivedPattern  = regexp.MustCompile(`@archived:(true|false)`)
 	createdAtPattern = regexp.MustCompile(`@created:(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)`)
 	duePattern       = regexp.MustCompile(`@due:(\d{4}-\d{2}-\d{2})`)
 	tagPattern       = regexp.MustCompile(`@tag:([^\s@]+)`)
@@ -187,6 +188,16 @@ func LoadTasks() []model.Task {
 				description = strings.TrimSpace(priorityPattern.ReplaceAllString(description, ""))
 			}
 
+			// Extract archived status if present
+			var archived bool
+			archivedMatch := archivedPattern.FindStringSubmatch(description)
+			if len(archivedMatch) > 1 {
+				archivedStr := archivedMatch[1]
+				archived = archivedStr == "true"
+				// Remove the archived tag from description
+				description = strings.TrimSpace(archivedPattern.ReplaceAllString(description, ""))
+			}
+
 			// Extract creation date if present
 			createdAt := time.Now() // Default to now if not found
 			createdAtMatch := createdAtPattern.FindStringSubmatch(description)
@@ -234,6 +245,7 @@ func LoadTasks() []model.Task {
 				Category:    currentCategory,
 				Priority:    priority,
 				CreatedAt:   createdAt,
+				Archived:    archived, // Use parsed archived status
 				Metadata:    make(map[string]string),
 			}
 
@@ -297,6 +309,11 @@ func SaveTasks(tasks []model.Task) error {
 			// Add priority tag if set
 			if task.Priority != "" {
 				description = fmt.Sprintf("%s @priority:%s", description, task.Priority)
+			}
+
+			// Add archived tag if set
+			if task.Archived {
+				description = fmt.Sprintf("%s @archived:true", description)
 			}
 
 			// Add creation date
