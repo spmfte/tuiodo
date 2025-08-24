@@ -3,8 +3,6 @@
 # Exit on error
 set -e
 
-GITHUB_TOKEN=$GITHUB_TOKEN
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -26,41 +24,18 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Function to get confirmation
-confirm() {
-    read -p "$1 (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_error "Operation cancelled by user"
-        exit 1
-    fi
-}
-
 # Check if we're in the right directory
 if [ ! -f "main.go" ]; then
     print_error "Please run this script from the project root directory"
     exit 1
 fi
 
-# Check if GoReleaser is installed
-if ! command -v goreleaser &> /dev/null; then
-    print_error "GoReleaser is not installed. Please install it first:"
-    echo "go install github.com/goreleaser/goreleaser@latest"
+# Check if we have uncommitted changes
+if [ -n "$(git status --porcelain)" ]; then
+    print_error "You have uncommitted changes. Please commit or stash them first."
+    git status --porcelain
     exit 1
 fi
-
-# Read GitHub token from file
-if [ -f "GITHUB_TOKEN" ]; then
-    export GITHUB_TOKEN=$(cat GITHUB_TOKEN)
-    print_success "GitHub token loaded from GITHUB_TOKEN file"
-else
-    print_error "GITHUB_TOKEN file not found. Please create it with your GitHub token."
-    exit 1
-fi
-
-# Set GitHub repository for GoReleaser
-export GITHUB_REPOSITORY="spmfte/tuiodo"
-print_success "GitHub repository set to $GITHUB_REPOSITORY"
 
 # Build the project to ensure it compiles
 print_step "Building project..."
@@ -83,19 +58,7 @@ CURRENT_VERSION=${CURRENT_VERSION#v}
 
 # Ask for the new version
 echo -e "\nCurrent version is: ${GREEN}$CURRENT_VERSION${NC}"
-read -p "Enter new version number (without 'v' prefix) or press Enter to keep current version: " NEW_VERSION
-
-# If no version entered, keep current version
-if [ -z "$NEW_VERSION" ]; then
-    NEW_VERSION="$CURRENT_VERSION"
-    echo -e "Keeping current version: ${GREEN}$NEW_VERSION${NC}"
-    
-    # Check if there are any changes to commit
-    if [ -z "$(git status --porcelain)" ]; then
-        print_error "No changes to commit. Please make some changes first or specify a new version."
-        exit 1
-    fi
-fi
+read -p "Enter new version number (without 'v' prefix): " NEW_VERSION
 
 # Validate version number format
 if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -103,56 +66,45 @@ if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 1
 fi
 
-# Show changes to be committed
-print_step "Files changed since last commit:"
-git status --porcelain
+# Check if tag already exists (locally or remotely)
+if git tag -l "v$NEW_VERSION" | grep -q "v$NEW_VERSION" || git ls-remote --tags origin "v$NEW_VERSION" | grep -q "v$NEW_VERSION"; then
+    print_error "Version v$NEW_VERSION already exists. Please use a different version number."
+    exit 1
+fi
 
 # Get commit message
 echo
-read -p "Enter commit message: " COMMIT_MESSAGE
+read -p "Enter commit message for this release: " COMMIT_MESSAGE
 
 # Confirm actions
 echo -e "\nThe following actions will be performed:"
-echo -e "1. Stage and commit changes with message: ${GREEN}$COMMIT_MESSAGE${NC}"
-echo -e "2. Create and push tag v$NEW_VERSION"
-echo -e "3. Push changes to remote repository"
-echo -e "4. Run GoReleaser to create release and update Homebrew formula"
+echo -e "1. Create and push tag v$NEW_VERSION"
+echo -e "2. GitHub Actions will automatically:"
+echo -e "   - Build binaries for all platforms"
+echo -e "   - Create GitHub release with assets"
+echo -e "   - Update Homebrew formula"
 echo
-confirm "Do you want to proceed?"
-
-# Stage all changes
-print_step "Staging changes..."
-git add .
-print_success "Changes staged"
-
-# Commit changes
-print_step "Committing changes..."
-git commit -m "$COMMIT_MESSAGE"
-print_success "Changes committed"
+read -p "Do you want to proceed? (y/n) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    print_error "Operation cancelled by user"
+    exit 1
+fi
 
 # Create and push tag
 print_step "Creating tag v$NEW_VERSION..."
-if git tag -l "v$NEW_VERSION" | grep -q "v$NEW_VERSION"; then
-    echo -e "${YELLOW}Tag v$NEW_VERSION already exists. Updating it...${NC}"
-    git tag -d "v$NEW_VERSION"
-fi
 git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
-print_success "Tag created"
+print_success "Tag created locally"
 
-# Push changes and tags
-print_step "Pushing changes and tags to remote..."
-git push origin master
-git push origin "v$NEW_VERSION" --force
-print_success "Changes and tags pushed"
-
-# Run GoReleaser
-print_step "Running GoReleaser to create release and update Homebrew..."
-goreleaser release --clean
+# Push tag to trigger GitHub Actions
+print_step "Pushing tag to trigger automated release..."
+git push origin "v$NEW_VERSION"
+print_success "Tag pushed successfully"
 
 # Final success message
-echo -e "\n${GREEN}Release v$NEW_VERSION completed successfully!${NC}"
-echo -e "GoReleaser has:"
-echo "1. Created GitHub release with binaries for all platforms"
-echo "2. Updated the Homebrew formula automatically"
-echo "3. Pushed changes to your Homebrew tap repository"
-echo -e "\nUsers can now run: brew upgrade tuiodo" 
+echo -e "\n${GREEN}Release v$NEW_VERSION initiated successfully!${NC}"
+echo -e "GitHub Actions is now building and releasing your software."
+echo -e "You can monitor progress at: https://github.com/spmfte/tuiodo/actions"
+echo -e "\nOnce complete, users can:"
+echo -e "1. Download binaries from: https://github.com/spmfte/tuiodo/releases/tag/v$NEW_VERSION"
+echo -e "2. Update Homebrew: brew upgrade tuiodo" 

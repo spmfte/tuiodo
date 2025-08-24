@@ -22,8 +22,7 @@ builds:
     binary: tuiodo
 
 archives:
-  - format: tar.gz
-    name_template: >-
+  - name_template: >-
       {{ .ProjectName }}-
       {{- title .Os }}-
       {{- if eq .Arch "amd64" }}x86_64
@@ -31,12 +30,16 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+      - goos: linux
+        format: tar.gz
+      - goos: darwin
+        format: tar.gz
 
 checksum:
   name_template: 'checksums.txt'
 
-# Use brews section to update the existing Homebrew formula
-brews:
+# Use homebrew_casks for modern Homebrew integration
+homebrew_casks:
   - name: tuiodo
     repository:
       owner: spmfte
@@ -46,12 +49,4 @@ brews:
     homepage: "https://github.com/spmfte/tuiodo"
     description: "A modern terminal task manager with extensive customization"
     license: MIT
-    dependencies:
-      - go
-    test: |
-      system "#{bin}/tuiodo", "--version"
-    install: |
-      bin.install "tuiodo"
     commit_msg_template: "Update tuiodo to {{ .Version }}"
-    # This should force GoReleaser to use source tarball for SHA256
-    url_template: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}/archive/refs/tags/v{{ .Version }}.tar.gz"
