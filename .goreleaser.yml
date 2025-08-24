@@ -27,13 +27,6 @@ archives:
       {{- title .Os }}-
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
-    format_overrides:
-      - goos: windows
-        format: zip
-      - goos: linux
-        format: tar.gz
-      - goos: darwin
-        format: tar.gz
 
 checksum:
   name_template: 'checksums.txt'
