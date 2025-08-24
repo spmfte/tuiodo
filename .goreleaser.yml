@@ -31,21 +31,21 @@ archives:
 checksum:
   name_template: 'checksums.txt'
 
-# Use brews section to update the existing Homebrew formula
-brews:
-  - name: tuiodo
-    repository:
-      owner: spmfte
-      name: homebrew-tuiodo
-      branch: main
-      token: "{{ .Env.GITHUB_TOKEN }}"
-    homepage: "https://github.com/spmfte/tuiodo"
-    description: "A modern terminal task manager with extensive customization"
-    license: MIT
-    dependencies:
-      - go
-    test: |
-      system "#{bin}/tuiodo", "--version"
-    install: |
-      bin.install "tuiodo"
-    commit_msg_template: "Update tuiodo to {{ .Version }}"
+# Homebrew formula update disabled - handled manually in separate homebrew-tuiodo repository
+# brews:
+#   - name: tuiodo
+#     repository:
+#       owner: spmfte
+#       name: homebrew-tuiodo
+#       branch: main
+#       token: "{{ .Env.GITHUB_TOKEN }}"
+#     homepage: "https://github.com/spmfte/tuiodo"
+#     description: "A modern terminal task manager with extensive customization"
+#     license: MIT
+#     dependencies:
+#       - go
+#     test: |
+#       system "#{bin}/tuiodo", "--version"
+#     install: |
+#       bin.install "tuiodo"
+#     commit_msg_template: "Update tuiodo to {{ .Version }}"
