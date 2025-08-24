@@ -53,5 +53,5 @@ brews:
     install: |
       bin.install "tuiodo"
     commit_msg_template: "Update tuiodo to {{ .Version }}"
+    # This should force GoReleaser to use source tarball for SHA256
     url_template: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}/archive/refs/tags/v{{ .Version }}.tar.gz"
-    skip_upload: false
