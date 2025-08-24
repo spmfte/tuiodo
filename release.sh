@@ -3,7 +3,8 @@
 # Exit on error
 set -e
 
-GITHUB_TOKEN=
+# Release script for TUIODO - automatically handles Homebrew formula updates
+GITHUB_TOKEN=$GITHUB_TOKEN
 
 # Colors for output
 RED='\033[0;31m'
